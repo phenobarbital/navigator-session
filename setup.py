@@ -49,7 +49,7 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     license=__license__,
     setup_requires=[
-        "wheel==0.37.0",
+        "wheel==0.37.1",
         "Cython==0.29.28",
         "numpy==1.22.2",
         "asyncio==3.4.3",
@@ -57,7 +57,7 @@ setup(
         "cpython==0.0.6"
     ],
     install_requires=[
-        "wheel==0.37.0",
+        "wheel==0.37.1",
         "cpython==0.0.6",
         "Cython==0.29.28",
         "numpy==1.22.2",
@@ -85,7 +85,7 @@ setup(
         'pytest>=6.0.0',
         'pytest-asyncio==0.18.0',
         'pytest-xdist==2.1.0',
-        'pytest-assume==2.4.2'
+        'pytest-assume==2.4.3'
     ],
     test_suite='tests',
     project_urls={  # Optional
