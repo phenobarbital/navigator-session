@@ -68,9 +68,10 @@ setup(
         "asyncio==3.4.3",
         "cchardet==2.1.7",
         "rapidjson==1.0.0",
+        "jsonpickle==2.2.0",
         'yarl==1.7.2',
         'wrapt==1.14.1',
-        "python-rapidjson>=1.5",
+        "python-rapidjson>=1.8",
         'typing_extensions==4.3.0',
         'urllib3==1.26.11',
         "async-generator==1.10",
@@ -79,7 +80,7 @@ setup(
         "aioredis==2.0.1",
         "hiredis==2.0.0",
         "aiomcache==0.7.0",
-        "navconfig"
+        "navconfig>=0.9.2"
     ],
     tests_require=[
         'pytest>=6.0.0',
