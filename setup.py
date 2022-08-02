@@ -75,7 +75,7 @@ setup(
         'urllib3==1.26.8',
         "async-generator==1.10",
         "charset-normalizer>=2.0.7",
-        "redis==3.5.3",
+        "redis==4.3.4",
         "aioredis==2.0.1",
         "hiredis==2.0.0",
         "aiomcache==0.7.0",
