@@ -71,7 +71,7 @@ setup(
         'yarl==1.7.2',
         'wrapt==1.11.2',
         "python-rapidjson>=1.5",
-        'typing_extensions==4.1.1',
+        'typing_extensions==4.3.0',
         'urllib3==1.26.8',
         "async-generator==1.10",
         "charset-normalizer>=2.0.7",
