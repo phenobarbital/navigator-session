@@ -69,7 +69,7 @@ setup(
         "cchardet==2.1.7",
         "rapidjson==1.0.0",
         'yarl==1.7.2',
-        'wrapt==1.11.2',
+        'wrapt==1.14.1',
         "python-rapidjson>=1.5",
         'typing_extensions==4.3.0',
         'urllib3==1.26.11',
