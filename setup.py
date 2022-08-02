@@ -50,7 +50,7 @@ setup(
     license=__license__,
     setup_requires=[
         "wheel==0.37.1",
-        "Cython==0.29.28",
+        "Cython==0.29.32",
         "numpy==1.23.1",
         "asyncio==3.4.3",
         "cchardet==2.1.7",
@@ -59,7 +59,7 @@ setup(
     install_requires=[
         "wheel==0.37.1",
         "cpython==0.0.6",
-        "Cython==0.29.28",
+        "Cython==0.29.32",
         "numpy==1.23.1",
         "cryptography==36.0.2",
         "PyNaCl==1.5.0",
