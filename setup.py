@@ -61,7 +61,7 @@ setup(
         "cpython==0.0.6",
         "Cython==0.29.32",
         "numpy==1.23.1",
-        "cryptography==37.0.4",
+        "cryptography==38.0.1",
         "PyNaCl==1.5.0",
         "aiohttp==3.8.1",
         "uvloop==0.16.0",
