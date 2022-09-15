@@ -64,7 +64,7 @@ setup(
         "cryptography==37.0.4",
         "PyNaCl==1.5.0",
         "aiohttp==3.8.1",
-        "uvloop==0.16.0",
+        "uvloop==0.17.0",
         "asyncio==3.4.3",
         "cchardet==2.1.7",
         "rapidjson==1.0.0",
