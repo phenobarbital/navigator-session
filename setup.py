@@ -63,7 +63,7 @@ setup(
         "numpy==1.23.1",
         "cryptography==37.0.4",
         "PyNaCl==1.5.0",
-        "aiohttp==3.8.1",
+        "aiohttp==3.8.2",
         "uvloop==0.16.0",
         "asyncio==3.4.3",
         "cchardet==2.1.7",
