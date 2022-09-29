@@ -45,8 +45,8 @@ async def new_session(request: web.Request, userdata: Dict = None) -> SessionDat
     session = await storage.new_session(request, userdata)
     if not isinstance(session, SessionData):
         raise RuntimeError(
-            "Installed {!r} storage should return session instance "
-            "on .load_session() call, got {!r}.".format(storage, session))
+            f"Installed {storage!r} storage should return session instance "
+            "on .load_session() call, got {session!r}.")
     request[SESSION_OBJECT] = session
     return session
 
@@ -93,6 +93,6 @@ async def get_session(
         request['session'] = session
         if new is True and not isinstance(session, SessionData):
             raise RuntimeError(
-                "Installed {!r} storage should return session instance "
-                "on .load_session() call, got {!r}.".format(storage, session))
+                f"Installed {session!r} storage should return session instance "
+                "on .load_session() call, got {session!r}.")
     return session

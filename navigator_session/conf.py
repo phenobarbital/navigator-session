@@ -1,4 +1,4 @@
-from navconfig import config, DEBUG
+from navconfig import config
 
 # Basic configuration:
 APP_NAME = config.get('APP_NAME', fallback='Navigator')
