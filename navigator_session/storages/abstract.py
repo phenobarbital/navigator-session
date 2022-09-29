@@ -4,19 +4,17 @@ import abc
 import uuid
 import time
 import logging
-from aiohttp import web
-from aiohttp.web_middlewares import Handler
 from typing import (
-    Callable,
     Dict,
-    Iterator,
-    Mapping,
-    MutableMapping,
     Optional,
-    Awaitable,
     cast,
     Any
 )
+from collections.abc import Awaitable, Callable, Iterator, Mapping, MutableMapping
+from aiohttp import web
+from aiohttp.web_middlewares import Handler
+import jsonpickle
+from jsonpickle.unpickler import loadclass
 from navigator_session.conf import (
     SESSION_NAME,
     SESSION_TIMEOUT,
@@ -24,9 +22,9 @@ from navigator_session.conf import (
     SESSION_OBJECT,
     SESSION_STORAGE
 )
-from jsonpickle.unpickler import loadclass
-import jsonpickle
 from asyncdb.models import Model
+
+
 
 Middleware = Callable[[web.Request, Handler], Awaitable[web.StreamResponse]]
 
@@ -40,16 +38,16 @@ class ModelHandler(jsonpickle.handlers.BaseHandler):
         data['__dict__'] = self.context.flatten(obj.__dict__, reset=False)
         return data
 
-    def restore(self, data):
-        module_and_type = data['py/object']
-        cls = loadclass(module_and_type)
-        if hasattr(cls, '__new__'):
-            obj = cls.__new__(cls)
+    def restore(self, obj):
+        module_and_type = obj['py/object']
+        mdl = loadclass(module_and_type)
+        if hasattr(mdl, '__new__'):
+            cls = mdl.__new__(mdl)
         else:
-            obj = object.__new__(cls)
+            cls = object.__new__(mdl)
 
-        obj.__dict__ = self.context.restore(data['__dict__'], reset=False)
-        return obj
+        cls.__dict__ = self.context.restore(obj['__dict__'], reset=False)
+        return cls
 
 jsonpickle.handlers.registry.register(Model, ModelHandler)
 
@@ -92,7 +90,7 @@ class SessionData(MutableMapping[str, Any]):
             self._data.update(data)
 
     def __repr__(self) -> str:
-        return '<{} [new:{}, created:{}] {!r}>'.format(
+        return '<{} [new:{}, created:{}] {!r}>'.format( # pylint: disable=C0209
             'NAV-Session ', self.new, self.created, self._data
         )
 
@@ -127,7 +125,7 @@ class SessionData(MutableMapping[str, Any]):
     def changed(self) -> None:
         self._changed = True
 
-    def session_data(self) -> Dict:
+    def session_data(self) -> dict:
         return self._data
 
     def invalidate(self) -> None:
@@ -175,7 +173,7 @@ class SessionData(MutableMapping[str, Any]):
         try:
             return jsonpickle.encode(obj)
         except Exception as err:
-            raise RuntimeError(err)
+            raise RuntimeError(err) from err
 
     def decode(self, key: str) -> Any:
         """decode.
@@ -197,9 +195,7 @@ class SessionData(MutableMapping[str, Any]):
             # key is missing
             return None
         except Exception as err:
-            raise RuntimeError(err)
-        finally:
-            pass
+            raise RuntimeError(err) from err
 
 
 class AbstractStorage(metaclass=abc.ABCMeta):
@@ -223,6 +219,8 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         self.__name__: str = SESSION_NAME
         self._domain: Optional[str] = domain
         self._path: str = path
+        self._secure = secure
+        self._kwargs = kwargs
 
     def id_factory(self) -> str:
         return uuid.uuid4().hex
@@ -241,7 +239,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
     async def new_session(
         self,
         request: web.Request,
-        data: Dict = None
+        data: dict = None
     ) -> SessionData:
         pass
 
@@ -249,6 +247,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
     async def load_session(
         self,
         request: web.Request,
+        userdata: dict = None,
         new: bool = False
     ) -> SessionData:
         pass
@@ -275,7 +274,6 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         session: SessionData
     ) -> None:
         """Try to Invalidate the Session in the Storage."""
-        pass
 
     async def forgot(self, request):
         """Delete a User Session."""
@@ -287,8 +285,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
             del request[SESSION_OBJECT]
         except Exception as err:
             print('Error: ', err)
-        finally:
-            return True
+            logging.warning('Session: Error on Forgot Method: {err}')
 
     def load_cookie(self, request: web.Request) -> str:
         """Getting Cookie from User (if needed)"""
@@ -326,9 +323,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
                 response.set_cookie(self.__name__, cookie_data, **params)
 
 
-"""
- Basic Middleware for Session System
-"""
+### Basic Middleware for Session System
 def session_middleware(
         app: web.Application,
         storage: 'AbstractStorage'
