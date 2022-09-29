@@ -1,13 +1,10 @@
 """Encrypted JSON Cookie Storage."""
 import base64
-from aiohttp import web
 from typing import (
-    Dict,
     Optional,
-    Callable,
-    Union,
-    Any
+    Union
 )
+from aiohttp import web
 from cryptography import fernet
 from navigator_session.conf import (
     SESSION_NAME,
@@ -55,7 +52,7 @@ class CookieStorage(AbstractStorage):
     async def new_session(
         self,
         request: web.Request,
-        data: Dict = None
+        data: dict = None
     ) -> SessionData:
         pass
 
@@ -82,4 +79,3 @@ class CookieStorage(AbstractStorage):
         session: SessionData
     ) -> None:
         """Try to Invalidate the Session in the Storage."""
-        pass
