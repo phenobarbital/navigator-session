@@ -64,7 +64,7 @@ setup(
         "jsonpickle==2.2.0",
         'yarl==1.8.1',
         'wrapt==1.14.1',
-        'urllib3==1.26.11',
+        'urllib3==1.26.12',
         "aioredis==2.0.1",
         "navconfig>=0.9.2"
     ],
