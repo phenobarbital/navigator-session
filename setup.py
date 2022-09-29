@@ -62,9 +62,9 @@ setup(
         "cchardet==2.1.7",
         "orjson==3.8.0",
         "jsonpickle==2.2.0",
-        'yarl==1.7.2',
+        'yarl==1.8.1',
         'wrapt==1.14.1',
-        'urllib3==1.26.11',
+        'urllib3==1.26.12',
         "aioredis==2.0.1",
         "navconfig>=0.9.2"
     ],
