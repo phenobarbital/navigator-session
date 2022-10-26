@@ -49,6 +49,12 @@ class CookieStorage(AbstractStorage):
             secret_key = base64.urlsafe_b64encode(secret_key)
             self._secret = fernet.Fernet(secret_key)
 
+    async def on_startup(self, app: web.Application):
+        pass
+
+    async def on_cleanup(self, app: web.Application):
+        pass
+
     async def new_session(
         self,
         request: web.Request,
