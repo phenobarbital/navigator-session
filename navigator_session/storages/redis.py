@@ -1,11 +1,7 @@
 """Using Redis for Saving Session Storage."""
 import time
 import logging
-from functools import partial
-from typing import (
-    Dict,
-    Optional
-)
+from typing import Optional
 from collections.abc import Callable
 from aiohttp import web
 import aioredis
@@ -32,6 +28,8 @@ class RedisStorage(AbstractStorage):
         ) -> None:
         self._redis: Callable = None
         self._objencoder = DefaultEncoder()
+        self._encoder = self._objencoder.dumps
+        self._decoder = self._objencoder.loads
         super(
             RedisStorage, self
         ).__init__(
@@ -42,33 +40,27 @@ class RedisStorage(AbstractStorage):
             **kwargs
         )
 
-    def configure_session(self, app: web.Application) -> None:
-        super(RedisStorage, self).configure_session(app)
-        self._encoder = self._objencoder.dumps
-        self._decoder = self._objencoder.loads
-        ## adding redis to loop:
-        async def _setup_redis(app: web.Application):
-            try:
-                self._redis = aioredis.ConnectionPool.from_url(
-                    SESSION_URL,
-                    decode_responses=True,
-                    encoding='utf-8'
-                )
-            except Exception as err:
-                logging.exception(err, stack_info=True)
-                return False
-        app.on_startup.append(_setup_redis)
-        async def close_redis(app: web.Application):
-            try:
-                await self._redis.disconnect(inuse_connections = True)
-            except Exception as ex:
-                logging.warning(ex)
-        app.on_cleanup.append(close_redis)
+    async def on_startup(self, app: web.Application):
+        try:
+            self._redis = aioredis.ConnectionPool.from_url(
+                SESSION_URL,
+                decode_responses=True,
+                encoding='utf-8'
+            )
+        except Exception as err: # pylint: disable=W0703
+            logging.exception(err, stack_info=True)
+            return False
+
+    async def on_cleanup(self, app: web.Application):
+        try:
+            await self._redis.disconnect(inuse_connections = True)
+        except Exception as ex: # pylint: disable=W0703
+            logging.warning(ex)
 
     async def get_session(self, request: web.Request, userdata: dict = None) -> SessionData:
         try:
             session = request.get(SESSION_OBJECT)
-        except Exception as err:
+        except Exception as err: # pylint: disable=W0703
             logging.debug(f'Redis Storage: Error on get Session: {err!s}')
             session = None
         if session is None:
@@ -96,7 +88,7 @@ class RedisStorage(AbstractStorage):
             # delete the ID of the session
             await conn.delete(session.identity)
             session.invalidate() # invalidate this session object
-        except Exception as err:
+        except Exception as err: # pylint: disable=W0703
             logging.error(err)
             return False
         return True
@@ -192,8 +184,9 @@ class RedisStorage(AbstractStorage):
         try:
             conn = aioredis.Redis(connection_pool=self._redis)
             result = await conn.set(
-                session_id, data, self.max_age
+                session_id, data, expire
             )
+            print('SESSION ', result)
         except Exception as err: # pylint: disable=W0703
             print('Error Saving Session: ', err)
             logging.exception(err, stack_info=True)
@@ -228,6 +221,7 @@ class RedisStorage(AbstractStorage):
             )
             logging.info(f'Creation of New Session: {result}')
             dd = await conn.get(session_id)
+            print('NEW ', dd)
         except Exception as err: # pylint: disable=W0703
             logging.exception(err)
             return False

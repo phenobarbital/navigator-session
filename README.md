@@ -24,4 +24,4 @@ Navigator_Session Allows us to store User-based data into a session Object, this
 
 ### License ###
 
-Navigator_Session is copyright of Jesus Lara (https://phenobarbital.info) and is under Apache 2 license. I am providing code in this repository under an open source license, remember, this is my personal repository; the license that you receive is from me and not from my employeer.
+Navigator_Session is copyright of Jesus Lara (https://phenobarbital.info) and under Apache 2 license. I am providing code in this repository under an open source license, remember, this is my personal repository; the license that you receive is from me and not from my employeer.
