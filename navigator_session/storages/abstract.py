@@ -155,9 +155,9 @@ class AbstractStorage(metaclass=abc.ABCMeta):
             session.ip_addr = request.remote
             session.path_qs = request.path_qs
             session.path = request.path
-            session.referer = request.referer
+            session.headers = request.headers
             session.rel_url = request.rel_url
-        except (TypeError, AttributeError, ValueError):
-            pass
+        except (TypeError, AttributeError, ValueError) as ex:
+            logging.warning(f'Unable to read Request info: {ex}')
         ### modified Session Object:
         return session

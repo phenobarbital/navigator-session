@@ -126,7 +126,7 @@ class RedisStorage(AbstractStorage):
         if session_id is None and new is False:
             return False
         # we need to load session data from redis
-        print(f':::::: LOAD SESSION FOR {session_id} ::::: ')
+        logging.debug(f':::::: LOAD SESSION FOR {session_id} ::::: ')
         try:
             data = await conn.get(session_id)
         except Exception as err: # pylint: disable=W0703
@@ -143,7 +143,6 @@ class RedisStorage(AbstractStorage):
         try:
             data = self._decoder(data)
             session = SessionData(
-                db=conn,
                 identity=session_id,
                 data=data,
                 new=False,
@@ -152,7 +151,6 @@ class RedisStorage(AbstractStorage):
         except Exception as err: # pylint: disable=W0703
             logging.warning(err)
             session = SessionData(
-                db=conn,
                 identity=None,
                 data=None,
                 new=True,
@@ -206,7 +204,7 @@ class RedisStorage(AbstractStorage):
                 session_id = data[SESSION_KEY]
             except KeyError:
                 session_id = self.id_factory()
-        print(f':::::: START CREATING A NEW SESSION FOR {session_id} ::::: ')
+        logging.debug(f':::::: START CREATING A NEW SESSION FOR {session_id} ::::: ')
         if not data:
             data = {}
         # saving this new session on DB
@@ -222,14 +220,11 @@ class RedisStorage(AbstractStorage):
                 session_id, dt, self.max_age
             )
             logging.info(f'Creation of New Session: {result}')
-            dd = await conn.get(session_id)
-            print('NEW ', dd)
         except Exception as err: # pylint: disable=W0703
             logging.exception(err)
             return False
         try:
             session = SessionData(
-                db=conn,
                 identity=session_id,
                 data=data,
                 new=True,
