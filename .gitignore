@@ -18,6 +18,9 @@ apps/troc/migrations/
 apps/troc/migrations/__init__.py
 
 # Distribution / packaging
+build/
+sdist/
+dist/
 .Python
 env/
 .venv/
