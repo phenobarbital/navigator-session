@@ -5,6 +5,9 @@ APP_NAME = config.get('APP_NAME', fallback='Navigator')
 APP_TITLE = config.get("APP_TITLE", fallback="NAVIGATOR").upper()
 DOMAIN = config.get("DOMAIN", fallback="dev.local")
 
+### System Timezone:
+TIMEZONE = config.get('TIMEZONE', fallback='UTC')
+TZ = config.get("TZ", fallback=TIMEZONE)
 
 ### Session information:
 # User Object saved onto Response/Request Object

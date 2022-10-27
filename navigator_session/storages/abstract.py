@@ -139,3 +139,25 @@ class AbstractStorage(metaclass=abc.ABCMeta):
                 )
             else:
                 response.set_cookie(self.__name__, cookie_data, **params)
+
+
+    def session_info(self, session: SessionData, request: web.Request) -> SessionData:
+        """session_info.
+            Session Helper for adding more information extracted from Request.
+        Args:
+            session (SessionData): Session Object.
+            request (web.Request): aiohttp Web Request.
+
+        Returns:
+            SessionData: Session object with more attributes.
+        """
+        try:
+            session.ip_addr = request.remote
+            session.path_qs = request.path_qs
+            session.path = request.path
+            session.headers = request.headers
+            session.rel_url = request.rel_url
+        except (TypeError, AttributeError, ValueError) as ex:
+            logging.warning(f'Unable to read Request info: {ex}')
+        ### modified Session Object:
+        return session

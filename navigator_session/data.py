@@ -1,7 +1,8 @@
 import uuid
 import time
 from typing import Union, Optional, Any
-from collections.abc import Callable, Iterator, Mapping, MutableMapping
+from collections.abc import Iterator, Mapping, MutableMapping
+import pendulum
 import jsonpickle
 from jsonpickle.unpickler import loadclass
 from asyncdb.models import Model
@@ -34,11 +35,10 @@ class SessionData(MutableMapping[str, Any]):
     """
 
     _data: Union[str, Any] = {}
-    _db: Callable = None
 
     def __init__(
         self,
-        db: Callable, *,
+        *args,
         data: Optional[Mapping[str, Any]] = None,
         new: bool = False,
         identity: Optional[Any] = None,
@@ -46,15 +46,16 @@ class SessionData(MutableMapping[str, Any]):
     ) -> None:
         self._changed = False
         self._data = {}
-        self._db = db
         self._identity = data.get(SESSION_KEY, None) if data else identity
         if not self._identity:
             self._identity = uuid.uuid4().hex
         self._new = new if data != {} else True
         self._max_age = max_age if max_age else None
         created = data.get('created', None) if data else None
-        now = int(time.time())
-        age = now - created if isinstance(created, int) else now
+        self._now = pendulum.now('UTC') # time for this instance creation
+        now = int(self._now.int_timestamp)
+        self._now = now # time for this instance creation
+        age = now - created if created else now
         if max_age is not None and age > max_age:
             data = None
         if self._new or created is None:
@@ -64,6 +65,10 @@ class SessionData(MutableMapping[str, Any]):
         ## Data updating.
         if data is not None:
             self._data.update(data)
+        # Other mark timestamp for this session:
+        self._dow = self._now.day_of_week
+        self._time = self._now.time()
+        self.args = args
 
     def __repr__(self) -> str:
         return '<{} [new:{}, created:{}] {!r}>'.format( # pylint: disable=C0209
@@ -81,6 +86,14 @@ class SessionData(MutableMapping[str, Any]):
     @property
     def created(self) -> int:
         return self._created
+
+    @property
+    def dow(self) -> int:
+        return self._dow
+
+    @property
+    def session_time(self) -> time:
+        return self._time
 
     @property
     def empty(self) -> bool:

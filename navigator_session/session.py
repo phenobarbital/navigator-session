@@ -43,8 +43,22 @@ class SessionHandler:
         """
         Calling Session (and Storage) Startup.
         """
+        try:
+            await self.storage.on_startup(app)
+        except Exception as ex:
+            logging.exception(f'{ex}')
+            raise RuntimeError(
+                f"Session Storage Error: cannot start Storage Backend {ex}"
+            ) from ex
 
     async def session_cleanup(self, app: web.Application):
         """
         Cleanup Session Processes.
         """
+        try:
+            await self.storage.on_cleanup(app)
+        except Exception as ex:
+            logging.exception(f'{ex}')
+            raise RuntimeError(
+                f"Session Storage Error: cannot start Storage Backend {ex}"
+            ) from ex
