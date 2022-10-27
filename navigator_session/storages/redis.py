@@ -158,6 +158,8 @@ class RedisStorage(AbstractStorage):
                 new=True,
                 max_age=self.max_age
             )
+        ## add other options to session:
+        self.session_info(session, request)
         request[SESSION_KEY] = session_id
         session[SESSION_KEY] = session_id
         request[SESSION_OBJECT] = session
@@ -237,6 +239,8 @@ class RedisStorage(AbstractStorage):
             print(err)
             logging.exception(f'Error creating Session Data: {err!s}')
         # Saving Session Object:
+        ## add other options to session:
+        self.session_info(session, request)
         session[SESSION_KEY] = session_id
         request[SESSION_OBJECT] = session
         request[SESSION_KEY] = session_id

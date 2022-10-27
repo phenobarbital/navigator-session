@@ -1,11 +1,12 @@
 import uuid
 import time
+import pendulum
 from typing import Union, Optional, Any
 from collections.abc import Callable, Iterator, Mapping, MutableMapping
 import jsonpickle
 from jsonpickle.unpickler import loadclass
 from asyncdb.models import Model
-from navigator_session.conf import SESSION_KEY
+from navigator_session.conf import SESSION_KEY, TZ
 
 
 class ModelHandler(jsonpickle.handlers.BaseHandler):
@@ -53,17 +54,22 @@ class SessionData(MutableMapping[str, Any]):
         self._new = new if data != {} else True
         self._max_age = max_age if max_age else None
         created = data.get('created', None) if data else None
-        now = int(time.time())
-        age = now - created if isinstance(created, int) else now
+        now = pendulum.now()
+        enow = now.int_timestamp
+        self._now = now # time for this instance creation
+        age = enow - created if isinstance(created, int) else now
         if max_age is not None and age > max_age:
             data = None
         if self._new or created is None:
-            self._created = now
+            self._created = enow
         else:
             self._created = created
         ## Data updating.
         if data is not None:
             self._data.update(data)
+        # Other mark timestamp for this session:
+        self._dow = now.day_of_week
+        self._time = now.time()
 
     def __repr__(self) -> str:
         return '<{} [new:{}, created:{}] {!r}>'.format( # pylint: disable=C0209
@@ -81,6 +87,14 @@ class SessionData(MutableMapping[str, Any]):
     @property
     def created(self) -> int:
         return self._created
+
+    @property
+    def dow(self) -> int:
+        return self._dow
+
+    @property
+    def session_time(self) -> time:
+        return self._time
 
     @property
     def empty(self) -> bool:

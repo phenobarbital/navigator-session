@@ -92,7 +92,8 @@ setup(
         'yarl==1.8.1',
         'wrapt==1.14.1',
         "aioredis==2.0.1",
-        "navconfig>=0.10.0"
+        "navconfig>=0.10.0",
+        "pendulum==2.1.2"
     ],
     tests_require=[
         'pytest>=6.0.0',
