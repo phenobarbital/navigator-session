@@ -66,8 +66,9 @@ class SessionData(MutableMapping[str, Any]):
         if data is not None:
             self._data.update(data)
         # Other mark timestamp for this session:
-        self._dow = self._now.day_of_week
-        self._time = self._now.time()
+        dt = pendulum.now('UTC')
+        self._dow = dt.day_of_week
+        self._time = dt.time()
         self.args = args
 
     def __repr__(self) -> str:
