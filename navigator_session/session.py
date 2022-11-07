@@ -22,6 +22,10 @@ class SessionHandler:
             self.app = app # register the app into the Extension
         else:
             self.app = app.get_app() # Nav Application
+        ## Configure the Middleware for NAV Session.
+        self.app.middlewares.append(
+            session_middleware(app, self.storage)
+        )
         # startup operations over extension backend
         self.app.on_startup.append(
             self.session_startup
@@ -29,10 +33,6 @@ class SessionHandler:
         # cleanup operations over Auth backend
         self.app.on_cleanup.append(
             self.session_cleanup
-        )
-        ## Configure the Middleware for NAV Session.
-        self.app.middlewares.append(
-            session_middleware(app, self.storage)
         )
         logging.debug(':::: Session Handler Loaded ::::')
         # register the Auth extension into the app
