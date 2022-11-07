@@ -2,6 +2,7 @@
 User sessions for Navigator and aiohttp.web server.
 """
 from aiohttp import web
+
 from .version import (
     __title__, __description__, __version__, __author__
 )
