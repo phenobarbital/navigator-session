@@ -1,7 +1,6 @@
 from typing import cast
 from collections.abc import Callable, Awaitable
-from aiohttp import web, hdrs
-from aiohttp.web_urldispatcher import SystemRoute
+from aiohttp import web
 from aiohttp.web_middlewares import Handler
 from navconfig.logging import logging
 from navigator_session.conf import (
@@ -30,16 +29,9 @@ def session_middleware(
             handler: Handler
     ) -> web.StreamResponse:
 
-        if request.method == hdrs.METH_OPTIONS:
-            return await handler(request)
-
-        # avoid check system routes
-        if isinstance(request.match_info.route, SystemRoute):  # eg. 404
-            return await handler(request)
-
+        ## adding storage to every request:
         request[SESSION_STORAGE] = storage
         raise_response = None
-
         try:
             response = await handler(request)
         except web.HTTPException as exc:
