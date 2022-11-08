@@ -76,12 +76,12 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     license=__license__,
     setup_requires=[
-        "wheel==0.37.1",
+        "wheel==0.38.2",
         "asyncio==3.4.3",
         "cchardet==2.1.7",
     ],
     install_requires=[
-        "wheel==0.37.1",
+        "wheel==0.38.2",
         "PyNaCl==1.5.0",
         "aiohttp==3.8.3",
         "uvloop==0.17.0",
