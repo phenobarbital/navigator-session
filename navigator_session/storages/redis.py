@@ -5,7 +5,6 @@ from typing import Optional
 from collections.abc import Callable
 from aiohttp import web
 import aioredis
-from datamodel.parsers.encoders import DefaultEncoder
 from navigator_session.conf import (
     SESSION_URL,
     SESSION_KEY,
@@ -27,9 +26,6 @@ class RedisStorage(AbstractStorage):
             **kwargs
         ) -> None:
         self._redis: Callable = None
-        self._objencoder = DefaultEncoder()
-        self._encoder = self._objencoder.dumps
-        self._decoder = self._objencoder.loads
         super(
             RedisStorage, self
         ).__init__(
@@ -97,6 +93,7 @@ class RedisStorage(AbstractStorage):
         self,
         request: web.Request,
         userdata: dict = None,
+        response: web.StreamResponse = None,
         new: bool = False
     ) -> SessionData:
         """
@@ -109,6 +106,13 @@ class RedisStorage(AbstractStorage):
         new: if False, new session is not created.
         """
         # TODO: first: for security, check if cookie csrf_secure exists
+        session_id = None
+        if self.use_cookie:
+            cookie = self.load_cookie(request)
+            try:
+                session_id = cookie['session_id']
+            except KeyError:
+                session_id = None
         # if not, session is missed, expired, bad session, etc
         try:
             conn = aioredis.Redis(connection_pool=self._redis)
@@ -119,7 +123,8 @@ class RedisStorage(AbstractStorage):
             raise RuntimeError(
                 f'Redis Storage: Error loading Redis Session: {err!s}'
             ) from err
-        session_id = request.get(SESSION_KEY, None)
+        if session_id is None:
+            session_id = request.get(SESSION_KEY, None)
         if not session_id:
             session_id = userdata.get(SESSION_KEY, None) if userdata else None
             # TODO: getting from cookie
@@ -162,6 +167,12 @@ class RedisStorage(AbstractStorage):
         session[SESSION_KEY] = session_id
         request[SESSION_OBJECT] = session
         request["session"] = session
+        if self.use_cookie is True and response is not None:
+            cookie_data = {
+                "session_id": session_id
+            }
+            cookie_data = self._encoder(cookie_data)
+            self.save_cookie(response, cookie_data=cookie_data, max_age=self.max_age)
         return session
 
     async def save_session(self,
@@ -186,7 +197,6 @@ class RedisStorage(AbstractStorage):
             result = await conn.set(
                 session_id, data, expire
             )
-            print('SESSION ', result)
         except Exception as err: # pylint: disable=W0703
             print('Error Saving Session: ', err)
             logging.exception(err, stack_info=True)
@@ -195,7 +205,8 @@ class RedisStorage(AbstractStorage):
     async def new_session(
         self,
         request: web.Request,
-        data: dict = None
+        data: dict = None,
+        response: web.StreamResponse = None
     ) -> SessionData:
         """Create a New Session Object for this User."""
         session_id = request.get(SESSION_KEY, None)
@@ -230,6 +241,13 @@ class RedisStorage(AbstractStorage):
                 new=True,
                 max_age=self.max_age
             )
+            if self.use_cookie is True and response is not None:
+                cookie_data = {
+                    "last_visit": t,
+                    "session_id": session_id
+                }
+                cookie_data = self._encoder(cookie_data)
+                self.save_cookie(response, cookie_data=cookie_data, max_age=self.max_age)
         except Exception as err: # pylint: disable=W0703
             print(err)
             logging.exception(f'Error creating Session Data: {err!s}')

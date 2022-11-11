@@ -1,17 +1,33 @@
 """Base Class for all Session Storages."""
+import sys
 import abc
 import uuid
 import time
 import logging
 from typing import Optional
 from aiohttp import web
+from datamodel.parsers.encoders import DefaultEncoder
 from navigator_session.conf import (
-    SESSION_NAME,
     SESSION_TIMEOUT,
     SESSION_KEY,
-    SESSION_OBJECT
+    SESSION_OBJECT,
+    SESSION_COOKIE_SECURE
 )
 from navigator_session.data import SessionData
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
+
+class _CookieParams(TypedDict, total=False):
+    domain: Optional[str]
+    max_age: Optional[int]
+    path: str
+    secure: Optional[bool]
+    httponly: bool
+    samesite: Optional[str]
+    expires: str
 
 class AbstractStorage(metaclass=abc.ABCMeta):
 
@@ -21,21 +37,31 @@ class AbstractStorage(metaclass=abc.ABCMeta):
             self,
             *,
             max_age: int = None,
-            secure: bool = None,
+            secure: bool = True,
             domain: Optional[str] = None,
             path: str = "/",
+            httponly: bool = True,
+            samesite: Optional[str] = 'Lax',
             **kwargs
         ) -> None:
         if not max_age:
             self.max_age = SESSION_TIMEOUT
         else:
             self.max_age = max_age
+        if 'use_cookie' in kwargs:
+            self.use_cookie = kwargs['use_cookie']
+            del kwargs['use_cookie']
         # Storage Name
-        self.__name__: str = SESSION_NAME
+        self.__name__: str = SESSION_COOKIE_SECURE
         self._domain: Optional[str] = domain
         self._path: str = path
         self._secure = secure
         self._kwargs = kwargs
+        self._httponly = httponly
+        self._samesite = samesite
+        self._objencoder = DefaultEncoder()
+        self._encoder = self._objencoder.dumps
+        self._decoder = self._objencoder.loads
 
     def id_factory(self) -> str:
         return uuid.uuid4().hex
@@ -65,6 +91,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         self,
         request: web.Request,
         userdata: dict = None,
+        response: web.StreamResponse = None,
         new: bool = False
     ) -> SessionData:
         pass
@@ -92,7 +119,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
     ) -> None:
         """Try to Invalidate the Session in the Storage."""
 
-    async def forgot(self, request):
+    async def forgot(self, request: web.Request, response: web.StreamResponse = None):
         """Delete a User Session."""
         session = await self.get_session(request)
         await self.invalidate(request, session)
@@ -104,11 +131,15 @@ class AbstractStorage(metaclass=abc.ABCMeta):
             logging.warning(
                 f'Session: Error on Forgot Method: {err}'
             )
+        if response is not None:
+            # also, forgot the secure Cookie:
+            self.forgot_cooke(response)
 
     def load_cookie(self, request: web.Request) -> str:
         """Getting Cookie from User (if needed)"""
         if self.use_cookie is True:
-            return request.cookies.get(self.__name__, None)
+            cookie = request.cookies.get(self.__name__, None)
+            return self._decoder(cookie)
         else:
             return None
 
@@ -126,13 +157,21 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         max_age: Optional[int] = None,
     ) -> None:
         if self.use_cookie is True:
-            params = {}
+            expires = None
             if max_age is not None:
-                params["max_age"] = max_age
                 t = time.gmtime(time.time() + max_age)
-                params["expires"] = time.strftime("%a, %d-%b-%Y %T GMT", t)
+                expires = time.strftime("%a, %d-%b-%Y %T GMT", t)
             else:
-                params['max_age'] = self.max_age
+                max_age = self.max_age
+            params = _CookieParams(
+                domain=self._domain,
+                max_age=max_age,
+                path=self._path,
+                secure=self._secure,
+                httponly=self._httponly,
+                samesite=self._samesite,
+                expires=expires
+            )
             if not cookie_data:
                 response.del_cookie(
                     self.__name__, domain=self._domain, path=self._path
