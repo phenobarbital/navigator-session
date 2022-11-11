@@ -35,7 +35,7 @@ REDIS_PORT = config.get("REDIS_PORT", fallback=6379)
 REDIS_SESSION_DB = config.get("REDIS_SESSION_DB", fallback=0)
 SESSION_URL = f"{SESSION_BACKEND}://{REDIS_HOST}:{REDIS_PORT}/{REDIS_SESSION_DB}"
 
-
 # User Attributes:
 SESSION_USER_PROPERTY = config.get('SESSION_USER_PROPERTY', fallback='user')
 SESSION_KEY = config.get('SESSION_KEY', fallback='id')
+SESSION_COOKIE_SECURE = config.get('SESSION_COOKIE_SECURE', fallback='csrf_secure')

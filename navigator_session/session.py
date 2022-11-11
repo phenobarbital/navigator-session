@@ -8,10 +8,10 @@ class SessionHandler:
     """Authentication Backend for Navigator."""
     storage: Callable = None
 
-    def __init__(self,storage: str = 'redis') -> None:
+    def __init__(self,storage: str = 'redis', **kwargs) -> None:
         # TODO: Session Support with parametrization (other storages):
         if storage == 'redis':
-            self.storage = RedisStorage()
+            self.storage = RedisStorage(**kwargs)
         else:
             raise NotImplementedError(
                 f"Cannot load a Session Storage {storage}"
