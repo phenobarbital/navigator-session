@@ -139,9 +139,9 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         """Getting Cookie from User (if needed)"""
         if self.use_cookie is True:
             cookie = request.cookies.get(self.__name__, None)
-            return self._decoder(cookie)
-        else:
-            return None
+            if cookie:
+                return self._decoder(cookie)
+        return None
 
     def forgot_cooke(self, response: web.StreamResponse) -> None:
         if self.use_cookie is True:
