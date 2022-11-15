@@ -111,7 +111,7 @@ class RedisStorage(AbstractStorage):
             cookie = self.load_cookie(request)
             try:
                 session_id = cookie['session_id']
-            except KeyError:
+            except (TypeError, KeyError):
                 session_id = None
         # if not, session is missed, expired, bad session, etc
         try:
