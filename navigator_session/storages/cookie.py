@@ -65,7 +65,10 @@ class CookieStorage(AbstractStorage):
     async def load_session(
         self,
         request: web.Request,
-        new: bool = False
+        userdata: dict = None,
+        response: web.StreamResponse = None,
+        new: bool = False,
+        ignore_cookie: bool = True
     ) -> SessionData:
         pass
 

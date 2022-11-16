@@ -92,7 +92,8 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         request: web.Request,
         userdata: dict = None,
         response: web.StreamResponse = None,
-        new: bool = False
+        new: bool = False,
+        ignore_cookie: bool = True
     ) -> SessionData:
         pass
 
