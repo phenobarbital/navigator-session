@@ -28,11 +28,11 @@ with open(version, 'r', encoding='utf-8') as meta:
             name = node.targets[0]
             if isinstance(name, ast.Name) and \
                     name.id in (
-                            '__version__',
-                            '__title__',
-                            '__description__',
-                            '__author__',
-                            '__license__', '__author_email__'):
+                        '__version__',
+                        '__title__',
+                        '__description__',
+                        '__author__',
+                        '__license__', '__author_email__'):
                 v = node.value
                 if name.id == '__version__':
                     __version__ = v.s
@@ -68,6 +68,7 @@ setup(
         "Topic :: Database :: Front-Ends",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Framework :: AsyncIO",
         "Framework :: aiohttp",
     ],
@@ -76,24 +77,23 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     license=__license__,
     setup_requires=[
-        "wheel==0.37.1",
         "asyncio==3.4.3",
         "cchardet==2.1.7",
     ],
     install_requires=[
-        "wheel==0.37.1",
         "PyNaCl==1.5.0",
         "aiohttp==3.8.3",
         "uvloop==0.17.0",
         "asyncio==3.4.3",
         "cchardet==2.1.7",
-        "orjson==3.8.0",
+        "orjson==3.8.2",
         "jsonpickle==2.2.0",
         'yarl==1.8.1',
         'wrapt==1.14.1',
         "aioredis==2.0.1",
-        "navconfig>=0.10.0",
-        "pendulum==2.1.2"
+        "pendulum==2.1.2",
+        "navconfig>=1.0.6",
+        "python_datamodel>=0.1.14"
     ],
     tests_require=[
         'pytest>=6.0.0',

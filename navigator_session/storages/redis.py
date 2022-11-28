@@ -94,7 +94,8 @@ class RedisStorage(AbstractStorage):
         request: web.Request,
         userdata: dict = None,
         response: web.StreamResponse = None,
-        new: bool = False
+        new: bool = False,
+        ignore_cookie: bool = True
     ) -> SessionData:
         """
         Load Session.
@@ -107,11 +108,11 @@ class RedisStorage(AbstractStorage):
         """
         # TODO: first: for security, check if cookie csrf_secure exists
         session_id = None
-        if self.use_cookie:
+        if ignore_cookie is False and  self.use_cookie is True:
             cookie = self.load_cookie(request)
             try:
                 session_id = cookie['session_id']
-            except KeyError:
+            except (TypeError, KeyError):
                 session_id = None
         # if not, session is missed, expired, bad session, etc
         try:

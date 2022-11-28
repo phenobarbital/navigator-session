@@ -5,7 +5,7 @@ from collections.abc import Iterator, Mapping, MutableMapping
 import pendulum
 import jsonpickle
 from jsonpickle.unpickler import loadclass
-from asyncdb.models import Model
+from datamodel import BaseModel
 from navigator_session.conf import SESSION_KEY
 
 
@@ -28,7 +28,7 @@ class ModelHandler(jsonpickle.handlers.BaseHandler):
         cls.__dict__ = self.context.restore(obj['__dict__'], reset=False)
         return cls
 
-jsonpickle.handlers.registry.register(Model, ModelHandler)
+jsonpickle.handlers.registry.register(BaseModel, ModelHandler)
 
 class SessionData(MutableMapping[str, Any]):
     """Session dict-like object.

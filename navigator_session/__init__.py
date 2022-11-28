@@ -51,7 +51,8 @@ async def new_session(request: web.Request, userdata: dict = None) -> SessionDat
 async def get_session(
         request: web.Request,
         userdata: dict = None,
-        new: bool = False
+        new: bool = False,
+        ignore_cookie: bool = True
 ) -> SessionData:
     """get_session.
 
@@ -61,6 +62,7 @@ async def get_session(
         request (web.Request): AIOhttp request object.
         userdata (Dict, optional): Optional User data.
         new (bool, optional): if true, a new session is created instead of return error.
+        ignore_cookie (bool, optional): if true, session cookie is ignored.
 
     Raises:
         RuntimeError: Session Middleware is not installed.
@@ -80,7 +82,8 @@ async def get_session(
             session = await storage.load_session(
                 request=request,
                 userdata=userdata,
-                new=new
+                new=new,
+                ignore_cookie=ignore_cookie
             )
         except Exception as err:
             raise RuntimeError(

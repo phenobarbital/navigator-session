@@ -92,7 +92,8 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         request: web.Request,
         userdata: dict = None,
         response: web.StreamResponse = None,
-        new: bool = False
+        new: bool = False,
+        ignore_cookie: bool = True
     ) -> SessionData:
         pass
 
@@ -139,9 +140,9 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         """Getting Cookie from User (if needed)"""
         if self.use_cookie is True:
             cookie = request.cookies.get(self.__name__, None)
-            return self._decoder(cookie)
-        else:
-            return None
+            if cookie:
+                return self._decoder(cookie)
+        return None
 
     def forgot_cooke(self, response: web.StreamResponse) -> None:
         if self.use_cookie is True:
