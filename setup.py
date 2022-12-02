@@ -87,7 +87,7 @@ setup(
         "asyncio==3.4.3",
         "cchardet==2.1.7",
         "orjson==3.8.2",
-        "jsonpickle==2.2.0",
+        "jsonpickle==3.0.0",
         'yarl==1.8.1',
         'wrapt==1.14.1',
         "aioredis==2.0.1",
