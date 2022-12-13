@@ -85,14 +85,10 @@ setup(
         "aiohttp==3.8.3",
         "uvloop==0.17.0",
         "asyncio==3.4.3",
-        "cchardet==2.1.7",
-        "orjson==3.8.2",
-        "jsonpickle==2.2.0",
-        'yarl==1.8.1',
-        'wrapt==1.14.1',
+        "navconfig[default]>=1.0.8",
+        "jsonpickle==3.0.0",
         "aioredis==2.0.1",
         "pendulum==2.1.2",
-        "navconfig>=1.0.6",
         "python_datamodel>=0.1.14"
     ],
     tests_require=[
