@@ -86,7 +86,7 @@ setup(
         "uvloop==0.17.0",
         "asyncio==3.4.3",
         "navconfig[default]>=1.0.8",
-        "jsonpickle==3.0.0",
+        "jsonpickle==3.0.1",
         "aioredis==2.0.1",
         "pendulum==2.1.2",
         "python_datamodel>=0.1.14"
