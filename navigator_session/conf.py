@@ -32,7 +32,7 @@ SESSION_BACKEND = config.get('SESSION_BACKEND', fallback='redis')
 # IF REDIS:
 REDIS_HOST = config.get("REDIS_HOST", fallback="localhost")
 REDIS_PORT = config.get("REDIS_PORT", fallback=6379)
-REDIS_SESSION_DB = config.get("REDIS_SESSION_DB", fallback=0)
+REDIS_SESSION_DB = config.get("SESSION_DB", fallback=0)
 SESSION_URL = f"{SESSION_BACKEND}://{REDIS_HOST}:{REDIS_PORT}/{REDIS_SESSION_DB}"
 
 # User Attributes:
