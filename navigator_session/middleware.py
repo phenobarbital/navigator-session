@@ -50,6 +50,7 @@ def session_middleware(
         if isinstance(session, SessionData):
             if session.is_changed:
                 await storage.save_session(request, response, session)
+                session.is_changed = False
         if raise_response:
             raise cast(web.HTTPException, raise_response)
         return response

@@ -5,8 +5,9 @@ from collections.abc import Iterator, Mapping, MutableMapping
 import pendulum
 import jsonpickle
 from jsonpickle.unpickler import loadclass
+from aiohttp import web
 from datamodel import BaseModel
-from navigator_session.conf import SESSION_KEY
+from navigator_session.conf import SESSION_KEY, SESSION_STORAGE
 
 
 class ModelHandler(jsonpickle.handlers.BaseHandler):
@@ -112,6 +113,10 @@ class SessionData(MutableMapping[str, Any]):
     def is_changed(self) -> bool:
         return self._changed
 
+    @is_changed.setter
+    def is_changed(self, value: bool) -> None:
+        self._changed = value
+
     def changed(self) -> None:
         self._changed = True
 
@@ -186,3 +191,13 @@ class SessionData(MutableMapping[str, Any]):
             return None
         except Exception as err:
             raise RuntimeError(err) from err
+
+    async def save_encoded_data(self, request: web.Request, key: str, obj: Any) -> None:
+        storage = request[SESSION_STORAGE]
+        try:
+            data = jsonpickle.encode(obj)
+        except RuntimeError:
+            return False
+        self._data[key] = data
+        self._changed = False
+        await storage.save_session(request, None, self)
