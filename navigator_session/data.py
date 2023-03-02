@@ -29,7 +29,7 @@ class ModelHandler(jsonpickle.handlers.BaseHandler):
         cls.__dict__ = self.context.restore(obj['__dict__'], reset=False)
         return cls
 
-jsonpickle.handlers.registry.register(BaseModel, ModelHandler)
+jsonpickle.handlers.registry.register(BaseModel, ModelHandler, base=True)
 
 class SessionData(MutableMapping[str, Any]):
     """Session dict-like object.
