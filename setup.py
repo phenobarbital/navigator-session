@@ -88,7 +88,7 @@ setup(
         "jsonpickle==3.0.1",
         "aioredis==2.0.1",
         "pendulum==2.1.2",
-        "python_datamodel>=0.1.18"
+        "python_datamodel>=0.2.1"
     ],
     tests_require=[
         'pytest>=6.0.0',
