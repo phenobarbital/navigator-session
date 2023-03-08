@@ -51,7 +51,7 @@ with open(version, 'r', encoding='utf-8') as meta:
 setup(
     name="navigator-session",
     version=__version__,
-    python_requires=">=3.8.0",
+    python_requires=">=3.9.0",
     url="https://github.com/phenobarbital/navigator-session",
     description=__description__,
     keywords=['asyncio', 'session', 'aioredis', 'aiohttp'],
@@ -77,12 +77,11 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     license=__license__,
     setup_requires=[
-        "asyncio==3.4.3",
-        "cchardet==2.1.7",
+        "asyncio==3.4.3"
     ],
     install_requires=[
         "PyNaCl==1.5.0",
-        "aiohttp==3.8.3",
+        "aiohttp==3.8.4",
         "uvloop==0.17.0",
         "asyncio==3.4.3",
         "navconfig[default]>=1.0.15",
