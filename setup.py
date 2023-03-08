@@ -78,6 +78,7 @@ setup(
     license=__license__,
     setup_requires=[
         "wheel==0.38.4",
+        "Cython==0.29.33",
         "asyncio==3.4.3"
     ],
     install_requires=[
