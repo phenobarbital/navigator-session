@@ -1,6 +1,7 @@
 import uuid
 import time
 from typing import Union, Optional, Any
+from datetime import datetime
 from collections.abc import Iterator, Mapping, MutableMapping
 import pendulum
 import jsonpickle
@@ -54,6 +55,7 @@ class SessionData(MutableMapping[str, Any]):
         self._max_age = max_age if max_age else None
         created = data.get('created', None) if data else None
         self._now = pendulum.now('UTC') # time for this instance creation
+        self.__created__ = self._now
         now = int(self._now.int_timestamp)
         self._now = now # time for this instance creation
         age = now - created if created else now
@@ -80,6 +82,10 @@ class SessionData(MutableMapping[str, Any]):
     @property
     def new(self) -> bool:
         return self._new
+
+    @property
+    def logon_time(self) -> datetime:
+        return self.__created__
 
     @property
     def identity(self) -> Optional[Any]:  # type: ignore[misc]
