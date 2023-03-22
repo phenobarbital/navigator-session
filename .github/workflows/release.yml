@@ -25,4 +25,4 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.NAVIGATOR_SESSION_PYPI_API_TOKEN }}
       run: |
-        twine upload  dist/*-manylinux*.whl
+        twine upload  dist/*.whl
