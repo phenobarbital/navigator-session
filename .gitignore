@@ -23,6 +23,7 @@ sdist/
 dist/
 .Python
 env/
+etc/
 .venv/
 .venv/*
 .troc/
