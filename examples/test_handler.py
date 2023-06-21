@@ -12,7 +12,7 @@ app = web.Application()
 
 # create a new instance of Auth System
 auth = SessionHandler()
-auth.setup(app) # configure this Auth system into App.
+auth.setup(app)  # configure this Auth system into App.
 
 app.add_routes([web.get('/', handle),
                 web.get('/{name}', handle)])

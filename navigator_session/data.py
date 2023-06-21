@@ -54,10 +54,10 @@ class SessionData(MutableMapping[str, Any]):
         self._new = new if data != {} else True
         self._max_age = max_age if max_age else None
         created = data.get('created', None) if data else None
-        self._now = pendulum.now('UTC') # time for this instance creation
+        self._now = pendulum.now('UTC')  # time for this instance creation
         self.__created__ = self._now
         now = int(self._now.int_timestamp)
-        self._now = now # time for this instance creation
+        self._now = now  # time for this instance creation
         age = now - created if created else now
         if max_age is not None and age > max_age:
             data = None
@@ -75,7 +75,7 @@ class SessionData(MutableMapping[str, Any]):
         self.args = args
 
     def __repr__(self) -> str:
-        return '<{} [new:{}, created:{}] {!r}>'.format( # pylint: disable=C0209
+        return '<{} [new:{}, created:{}] {!r}>'.format(  # pylint: disable=C0209
             'NAV-Session ', self.new, self.created, self._data
         )
 

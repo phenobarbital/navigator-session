@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Navigator-Session.
 
-    Asynchronous library for managing user-specific data into a session object, used by Navigator.
+    Asynchronous library for managing user-specific data into a session object,
+    used by Navigator.
 See:
 https://github.com/phenobarbital/navigator-session
 """
@@ -32,7 +33,9 @@ with open(version, 'r', encoding='utf-8') as meta:
                         '__title__',
                         '__description__',
                         '__author__',
-                        '__license__', '__author_email__'):
+                        '__license__',
+                        '__author_email__'
+            ):
                 v = node.value
                 if name.id == '__version__':
                     __version__ = v.s
@@ -89,6 +92,7 @@ setup(
         "navconfig[default]>=1.0.15",
         "jsonpickle==3.0.1",
         "aioredis==2.0.1",
+        "redis==4.5.5",
         "pendulum==2.1.2",
         "python_datamodel>=0.2.1"
     ],

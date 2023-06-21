@@ -8,7 +8,7 @@ class SessionHandler:
     """Authentication Backend for Navigator."""
     storage: Callable = None
 
-    def __init__(self,storage: str = 'redis', **kwargs) -> None:
+    def __init__(self, storage: str = 'redis', **kwargs) -> None:
         # TODO: Session Support with parametrization (other storages):
         if storage == 'redis':
             self.storage = RedisStorage(**kwargs)
@@ -19,9 +19,9 @@ class SessionHandler:
 
     def setup(self, app: web.Application) -> None:
         if isinstance(app, web.Application):
-            self.app = app # register the app into the Extension
+            self.app = app  # register the app into the Extension
         else:
-            self.app = app.get_app() # Nav Application
+            self.app = app.get_app()  # Nav Application
         ## Configure the Middleware for NAV Session.
         self.app.middlewares.append(
             session_middleware(app, self.storage)
@@ -37,7 +37,6 @@ class SessionHandler:
         logging.debug(':::: Session Handler Loaded ::::')
         # register the Auth extension into the app
         self.app['nav_session'] = self
-
 
     async def session_startup(self, app: web.Application):
         """

@@ -24,7 +24,7 @@ class CookieStorage(AbstractStorage):
             path: str = "/",
             secret_key: Union[str, bytes, bytearray, fernet.Fernet] = None,
             **kwargs
-        ) -> None:
+    ) -> None:
         super(
             CookieStorage, self
         ).__init__(
@@ -75,7 +75,8 @@ class CookieStorage(AbstractStorage):
     async def get_session(self, request: web.Request) -> SessionData:
         pass
 
-    async def save_session(self,
+    async def save_session(
+        self,
         request: web.Request,
         response: web.StreamResponse,
         session: SessionData

@@ -43,7 +43,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
             httponly: bool = True,
             samesite: Optional[str] = 'Lax',
             **kwargs
-        ) -> None:
+    ) -> None:
         if not max_age:
             self.max_age = SESSION_TIMEOUT
         else:
@@ -105,7 +105,8 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         return SessionData(None, data=None, new=True, max_age=self.max_age)
 
     @abc.abstractmethod
-    async def save_session(self,
+    async def save_session(
+        self,
         request: web.Request,
         response: web.StreamResponse,
         session: SessionData
@@ -128,7 +129,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         try:
             del request[SESSION_KEY]
             del request[SESSION_OBJECT]
-        except Exception as err: # pylint: disable=W0703
+        except Exception as err:  # pylint: disable=W0703
             logging.warning(
                 f'Session: Error on Forgot Method: {err}'
             )
@@ -179,7 +180,6 @@ class AbstractStorage(metaclass=abc.ABCMeta):
                 )
             else:
                 response.set_cookie(self.__name__, cookie_data, **params)
-
 
     def session_info(self, session: SessionData, request: web.Request) -> SessionData:
         """session_info.

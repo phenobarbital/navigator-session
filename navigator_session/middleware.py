@@ -14,14 +14,14 @@ Middleware = Callable[[web.Request, Handler], Awaitable[web.StreamResponse]]
 
 ### Basic Middleware for Session System
 def session_middleware(
-        app: web.Application, # pylint: disable=W0613
+        app: web.Application,  # pylint: disable=W0613
         storage: AbstractStorage
 ) -> Middleware:
     """Middleware to attach Session Storage to every Request."""
     if not isinstance(storage, AbstractStorage):
         raise RuntimeError(
             f"Expected an AbstractStorage got {storage!s}"
-    )
+        )
 
     @web.middleware
     async def middleware(
