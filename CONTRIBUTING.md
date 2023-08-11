@@ -7,12 +7,12 @@ Navigator_Session is designed to use last syntax of asyncio-tools, for that reas
 You can do this with [pyenv][]:
 
 
-    $ pyenv install 3.9.1
-    $ pyenv local 3.9.1
+    $ pyenv install 3.10
+    $ pyenv local 3.10
 
 Or using virtualenv:
 
-    $ python3.9 -m venv .venv
+    $ python3.10 -m venv .venv
 
 Also, we can use the command "make venv" inside of Makefile.
 
