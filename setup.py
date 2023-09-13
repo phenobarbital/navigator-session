@@ -86,7 +86,7 @@ setup(
     ],
     install_requires=[
         "PyNaCl==1.5.0",
-        "aiohttp==3.8.4",
+        "aiohttp==3.8.5",
         "uvloop==0.17.0",
         "asyncio==3.4.3",
         "navconfig[default]>=1.0.15",
