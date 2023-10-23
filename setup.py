@@ -86,12 +86,11 @@ setup(
     ],
     install_requires=[
         "PyNaCl==1.5.0",
-        "aiohttp==3.8.5",
-        "uvloop==0.17.0",
+        "aiohttp==3.8.6",
+        "uvloop==0.19.0",
         "asyncio==3.4.3",
-        "navconfig[default]>=1.0.15",
-        "jsonpickle==3.0.1",
-        "aioredis==2.0.1",
+        "navconfig[default]>=1.4.0",
+        "jsonpickle==3.0.2",
         "redis==4.5.5",
         "pendulum==2.1.2",
         "python_datamodel>=0.2.1"
