@@ -80,18 +80,18 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     license=__license__,
     setup_requires=[
-        "wheel==0.40.0",
-        "Cython==0.29.33",
+        "wheel==0.42.0",
+        "Cython==3.0.6",
         "asyncio==3.4.3"
     ],
     install_requires=[
         "PyNaCl==1.5.0",
-        "aiohttp==3.8.6",
+        "aiohttp==3.9.1",
         "uvloop==0.19.0",
         "asyncio==3.4.3",
-        "navconfig[default]>=1.4.0",
+        "navconfig[default]>=1.5.0",
         "jsonpickle==3.0.2",
-        "redis==4.5.5",
+        "redis==5.0.1",
         "pendulum==2.1.2",
         "python_datamodel>=0.2.1"
     ],
