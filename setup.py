@@ -85,7 +85,6 @@ setup(
         "asyncio==3.4.3"
     ],
     install_requires=[
-        "PyNaCl==1.5.0",
         "aiohttp==3.9.1",
         "uvloop==0.19.0",
         "asyncio==3.4.3",
