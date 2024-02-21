@@ -85,7 +85,7 @@ setup(
         "asyncio==3.4.3"
     ],
     install_requires=[
-        "aiohttp==3.9.1",
+        "aiohttp==3.9.2",
         "uvloop==0.19.0",
         "asyncio==3.4.3",
         "navconfig[default]>=1.5.0",
