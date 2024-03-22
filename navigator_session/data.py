@@ -8,7 +8,7 @@ import jsonpickle
 from jsonpickle.unpickler import loadclass
 from aiohttp import web
 from datamodel import BaseModel
-from navigator_session.conf import SESSION_KEY, SESSION_STORAGE
+from .conf import SESSION_KEY, SESSION_STORAGE
 
 
 class ModelHandler(jsonpickle.handlers.BaseHandler):

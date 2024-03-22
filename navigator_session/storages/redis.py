@@ -5,7 +5,7 @@ from typing import Optional
 from collections.abc import Callable
 from aiohttp import web
 from redis import asyncio as aioredis
-from navigator_session.conf import (
+from ..conf import (
     SESSION_URL,
     SESSION_KEY,
     SESSION_OBJECT,

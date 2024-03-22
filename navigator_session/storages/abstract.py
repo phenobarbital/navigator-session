@@ -7,13 +7,14 @@ import logging
 from typing import Optional
 from aiohttp import web
 from datamodel.parsers.encoders import DefaultEncoder
-from navigator_session.conf import (
+from ..conf import (
     SESSION_TIMEOUT,
     SESSION_KEY,
     SESSION_OBJECT,
     SESSION_COOKIE_SECURE
 )
-from navigator_session.data import SessionData
+from ..data import SessionData
+
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict

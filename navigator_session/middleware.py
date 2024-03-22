@@ -3,7 +3,7 @@ from collections.abc import Callable, Awaitable
 from aiohttp import web
 from aiohttp.web_middlewares import Handler
 from navconfig.logging import logging
-from navigator_session.conf import (
+from .conf import (
     SESSION_OBJECT,
     SESSION_STORAGE
 )

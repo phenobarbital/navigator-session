@@ -85,14 +85,13 @@ setup(
         "asyncio==3.4.3"
     ],
     install_requires=[
-        "aiohttp==3.9.2",
+        "aiohttp==3.9.3",
         "uvloop==0.19.0",
         "asyncio==3.4.3",
-        "navconfig[default]>=1.5.0",
         "jsonpickle==3.0.2",
         "redis==5.0.1",
-        "pendulum==2.1.2",
         "python_datamodel>=0.2.1"
+        "navconfig[default]>=1.6.3",
     ],
     project_urls={  # Optional
         "Source": "https://github.com/phenobarbital/navigator-session",
