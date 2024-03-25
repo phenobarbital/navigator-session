@@ -89,7 +89,7 @@ setup(
         "uvloop==0.19.0",
         "asyncio==3.4.3",
         "jsonpickle==3.0.2",
-        "redis==5.0.1",
+        "redis==5.0.3",
         "python_datamodel>=0.2.1",
         "navconfig[default]>=1.6.3",
     ],
