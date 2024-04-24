@@ -72,6 +72,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Framework :: AsyncIO",
         "Framework :: aiohttp",
     ],
@@ -85,7 +86,7 @@ setup(
         "asyncio==3.4.3"
     ],
     install_requires=[
-        "aiohttp==3.9.3",
+        "aiohttp>=3.9.5",
         "uvloop==0.19.0",
         "asyncio==3.4.3",
         "jsonpickle==3.0.2",
