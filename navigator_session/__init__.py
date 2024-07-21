@@ -12,6 +12,7 @@ from .conf import (
     AUTH_SESSION_OBJECT,
     SESSION_TIMEOUT,
     SESSION_KEY,
+    SESSION_REQUEST_KEY,
     SESSION_URL,
     SESSION_PREFIX,
     SESSION_USER_PROPERTY
@@ -37,7 +38,7 @@ async def new_session(request: web.Request, userdata: dict = None) -> SessionDat
     storage = request.get(SESSION_STORAGE)
     if storage is None:
         raise RuntimeError(
-            "Missing Configuration for Session Middleware, please install on Aiohttp Middlewares"
+            "Missing Configuration for NAV Session Middleware."
         )
     session = await storage.new_session(request, userdata)
     if not isinstance(session, SessionData):
@@ -75,7 +76,7 @@ async def get_session(
         storage = request.get(SESSION_STORAGE)
         if storage is None:
             raise RuntimeError(
-                "Missing Configuration for Session Storage, please install Session Middleware."
+                "Missing Configuration of Session Storage, please install it."
             )
         # using the storage session for Load an existing Session
         try:
@@ -90,7 +91,7 @@ async def get_session(
                 f"Error Loading user Session: {err!s}"
             ) from err
         request[SESSION_OBJECT] = session
-        request['session'] = session
+        request[SESSION_REQUEST_KEY] = session
         if new is True and not isinstance(session, SessionData):
             raise RuntimeError(
                 f"Installed {session!r} storage should return session instance "

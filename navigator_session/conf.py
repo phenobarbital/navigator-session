@@ -22,9 +22,12 @@ SESSION_NAME = f"{APP_TITLE}_SESSION"
 JWT_ALGORITHM = config.get("JWT_ALGORITHM", fallback="HS256")
 SESSION_PREFIX = f'{SESSION_PREFIX}_session'
 SESSION_TIMEOUT = config.getint('SESSION_TIMEOUT', fallback=360000)
-SESSION_STORAGE = 'NAVIGATOR_SESSION_STORAGE'
-SESSION_OBJECT = 'NAV_SESSION'
-
+SESSION_STORAGE = config.get(
+    'NAV_SESSION_STORAGE',
+    fallback='NAVIGATOR_SESSION_STORAGE'
+)
+SESSION_OBJECT = config.get('SESSION_OBJECT', fallback='NAV_SESSION')
+SESSION_REQUEST_KEY = config.get('SESSION_REQUEST_KEY', fallback='session')
 
 # SESSION BACKEND:
 SESSION_BACKEND = config.get('SESSION_BACKEND', fallback='redis')
@@ -38,4 +41,5 @@ SESSION_URL = f"{SESSION_BACKEND}://{REDIS_HOST}:{REDIS_PORT}/{REDIS_SESSION_DB}
 # User Attributes:
 SESSION_USER_PROPERTY = config.get('SESSION_USER_PROPERTY', fallback='user')
 SESSION_KEY = config.get('SESSION_KEY', fallback='id')
+SESSION_ID = config.get('SESSION_ID', fallback='session_id')
 SESSION_COOKIE_SECURE = config.get('SESSION_COOKIE_SECURE', fallback='csrf_secure')

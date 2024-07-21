@@ -1,6 +1,5 @@
 """Using Redis for Saving Session Storage."""
 import time
-import logging
 from typing import Optional
 from collections.abc import Callable
 from aiohttp import web
@@ -8,7 +7,9 @@ from redis import asyncio as aioredis
 from ..conf import (
     SESSION_URL,
     SESSION_KEY,
+    SESSION_ID,
     SESSION_OBJECT,
+    SESSION_REQUEST_KEY,
     SESSION_STORAGE
 )
 from .abstract import AbstractStorage, SessionData
@@ -44,14 +45,14 @@ class RedisStorage(AbstractStorage):
                 encoding='utf-8'
             )
         except Exception as err:  # pylint: disable=W0703
-            logging.exception(err, stack_info=True)
+            self._logger.exception(err, stack_info=True)
             return False
 
     async def on_cleanup(self, app: web.Application):
         try:
             await self._redis.disconnect(inuse_connections=True)
         except Exception as ex:  # pylint: disable=W0703
-            logging.warning(ex)
+            self._logger.warning(ex)
 
     async def get_session(
         self,
@@ -61,7 +62,9 @@ class RedisStorage(AbstractStorage):
         try:
             session = request.get(SESSION_OBJECT)
         except Exception as err:  # pylint: disable=W0703
-            logging.debug(f'Redis Storage: Error on get Session: {err!s}')
+            self._logger.debug(
+                f'Redis Storage: Error on get Session: {err!s}'
+            )
             session = None
         if session is None:
             storage = request.get(SESSION_STORAGE)
@@ -71,7 +74,7 @@ class RedisStorage(AbstractStorage):
                 )
             session = await self.load_session(request, userdata)
         request[SESSION_OBJECT] = session
-        request["session"] = session
+        request[SESSION_REQUEST_KEY] = session
         return session
 
     async def invalidate(self, request: web.Request, session: SessionData) -> None:
@@ -89,7 +92,7 @@ class RedisStorage(AbstractStorage):
             await conn.delete(session.identity)
             session.invalidate()  # invalidate this session object
         except Exception as err:  # pylint: disable=W0703
-            logging.error(err)
+            self._logger.error(err)
             return False
         return True
 
@@ -122,7 +125,7 @@ class RedisStorage(AbstractStorage):
         try:
             conn = aioredis.Redis(connection_pool=self._redis)
         except Exception as err:
-            logging.exception(
+            self._logger.exception(
                 f'Redis Storage: Error loading Redis Session: {err!s}'
             )
             raise RuntimeError(
@@ -136,11 +139,11 @@ class RedisStorage(AbstractStorage):
         if session_id is None and new is False:
             return False
         # we need to load session data from redis
-        logging.debug(f':::::: LOAD SESSION FOR {session_id} ::::: ')
+        self._logger.debug(f':::::: LOAD SESSION FOR {session_id} ::::: ')
         try:
             data = await conn.get(session_id)
         except Exception as err:  # pylint: disable=W0703
-            logging.error(
+            self._logger.error(
                 f'Redis Storage: Error Getting Session data: {err!s}'
             )
             data = None
@@ -159,7 +162,7 @@ class RedisStorage(AbstractStorage):
                 max_age=self.max_age
             )
         except Exception as err:  # pylint: disable=W0703
-            logging.warning(err)
+            self._logger.warning(err)
             session = SessionData(
                 identity=None,
                 data=None,
@@ -205,7 +208,7 @@ class RedisStorage(AbstractStorage):
             )
         except Exception as err:  # pylint: disable=W0703
             print('Error Saving Session: ', err)
-            logging.exception(err, stack_info=True)
+            self._logger.exception(err, stack_info=True)
             return False
 
     async def new_session(
@@ -221,7 +224,9 @@ class RedisStorage(AbstractStorage):
                 session_id = data[SESSION_KEY]
             except KeyError:
                 session_id = self.id_factory()
-        logging.debug(f':::::: START CREATING A NEW SESSION FOR {session_id} ::::: ')
+        self._logger.debug(
+            f':::::: START CREATING A NEW SESSION FOR {session_id} ::::: '
+        )
         if not data:
             data = {}
         # saving this new session on DB
@@ -236,9 +241,9 @@ class RedisStorage(AbstractStorage):
             result = await conn.set(
                 session_id, dt, self.max_age
             )
-            logging.info(f'Creation of New Session: {result}')
+            self._logger.info(f'Creation of New Session: {result}')
         except Exception as err:  # pylint: disable=W0703
-            logging.exception(err)
+            self._logger.exception(err)
             return False
         try:
             session = SessionData(
@@ -259,7 +264,7 @@ class RedisStorage(AbstractStorage):
                     max_age=self.max_age
                 )
         except Exception as err:  # pylint: disable=W0703
-            logging.exception(f'Error creating Session Data: {err!s}')
+            self._logger.exception(f'Error creating Session Data: {err!s}')
         # Saving Session Object:
         ## add other options to session:
         self.session_info(session, request)

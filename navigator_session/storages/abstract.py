@@ -1,16 +1,22 @@
 """Base Class for all Session Storages."""
 import sys
-import abc
+from abc import ABCMeta, abstractmethod
 import uuid
 import time
 import logging
 from typing import Optional
 from aiohttp import web
 from datamodel.parsers.encoders import DefaultEncoder
+from datamodel.parsers.encoders.json import (  # pylint: disable=C0411
+    json_encoder,
+    json_decoder
+)
 from ..conf import (
     SESSION_TIMEOUT,
     SESSION_KEY,
+    SESSION_ID,
     SESSION_OBJECT,
+    SESSION_REQUEST_KEY,
     SESSION_COOKIE_SECURE
 )
 from ..data import SessionData
@@ -30,13 +36,14 @@ class _CookieParams(TypedDict, total=False):
     samesite: Optional[str]
     expires: str
 
-class AbstractStorage(metaclass=abc.ABCMeta):
+class AbstractStorage(metaclass=ABCMeta):
 
-    use_cookie: bool = False
+    _use_cookies: bool = False
 
     def __init__(
             self,
             *,
+            logger: Optional[logging.Logger] = None,
             max_age: int = None,
             secure: bool = True,
             domain: Optional[str] = None,
@@ -45,13 +52,16 @@ class AbstractStorage(metaclass=abc.ABCMeta):
             samesite: Optional[str] = 'Lax',
             **kwargs
     ) -> None:
+        if logger is not None:
+            self._logger = logger
+        else:
+            self._logger = logging.getLogger('Nav_Session.Storage')
         if not max_age:
             self.max_age = SESSION_TIMEOUT
         else:
             self.max_age = max_age
-        if 'use_cookie' in kwargs:
-            self.use_cookie = kwargs['use_cookie']
-            del kwargs['use_cookie']
+        # Using session cookies:
+        self._use_cookies = kwargs.get('use_cookies', False)
         # Storage Name
         self.__name__: str = SESSION_COOKIE_SECURE
         self._domain: Optional[str] = domain
@@ -61,8 +71,8 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         self._httponly = httponly
         self._samesite = samesite
         self._objencoder = DefaultEncoder()
-        self._encoder = self._objencoder.dumps
-        self._decoder = self._objencoder.loads
+        self._encoder = json_encoder
+        self._decoder = json_decoder
 
     def id_factory(self) -> str:
         return uuid.uuid4().hex
@@ -71,15 +81,15 @@ class AbstractStorage(metaclass=abc.ABCMeta):
     def cookie_name(self) -> str:
         return self.__name__
 
-    @abc.abstractmethod
+    @abstractmethod
     async def on_startup(self, app: web.Application):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     async def on_cleanup(self, app: web.Application):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     async def new_session(
         self,
         request: web.Request,
@@ -87,7 +97,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
     ) -> SessionData:
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     async def load_session(
         self,
         request: web.Request,
@@ -98,14 +108,19 @@ class AbstractStorage(metaclass=abc.ABCMeta):
     ) -> SessionData:
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     async def get_session(self, request: web.Request) -> SessionData:
         pass
 
     def empty_session(self) -> SessionData:
-        return SessionData(None, data=None, new=True, max_age=self.max_age)
+        return SessionData(
+            None,
+            data=None,
+            new=True,
+            max_age=self.max_age
+        )
 
-    @abc.abstractmethod
+    @abstractmethod
     async def save_session(
         self,
         request: web.Request,
@@ -114,40 +129,45 @@ class AbstractStorage(metaclass=abc.ABCMeta):
     ) -> None:
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     async def invalidate(
         self,
         request: web.Request,
         session: SessionData
     ) -> None:
         """Try to Invalidate the Session in the Storage."""
+        pass
 
     async def forgot(self, request: web.Request, response: web.StreamResponse = None):
-        """Delete a User Session."""
+        """forgot.
+
+        Forgot (delete) a user session.
+        """
         session = await self.get_session(request)
         await self.invalidate(request, session)
         request["session"] = None
         try:
             del request[SESSION_KEY]
             del request[SESSION_OBJECT]
+            del request[SESSION_REQUEST_KEY]
         except Exception as err:  # pylint: disable=W0703
-            logging.warning(
+            self._logger.warning(
                 f'Session: Error on Forgot Method: {err}'
             )
         if response is not None:
             # also, forgot the secure Cookie:
-            self.forgot_cooke(response)
+            self.forgot_cookie(response)
 
     def load_cookie(self, request: web.Request) -> str:
         """Getting Cookie from User (if needed)"""
-        if self.use_cookie is True:
+        if self._use_cookies is True:
             cookie = request.cookies.get(self.__name__, None)
             if cookie:
                 return self._decoder(cookie)
         return None
 
-    def forgot_cooke(self, response: web.StreamResponse) -> None:
-        if self.use_cookie is True:
+    def forgot_cookie(self, response: web.StreamResponse) -> None:
+        if self._use_cookies is True:
             response.del_cookie(
                 self.__name__, domain=self._domain, path=self._path
             )
@@ -159,7 +179,7 @@ class AbstractStorage(metaclass=abc.ABCMeta):
         *,
         max_age: Optional[int] = None,
     ) -> None:
-        if self.use_cookie is True:
+        if self._use_cookies is True:
             expires = None
             if max_age is not None:
                 t = time.gmtime(time.time() + max_age)
@@ -199,6 +219,6 @@ class AbstractStorage(metaclass=abc.ABCMeta):
             session.headers = request.headers
             session.rel_url = request.rel_url
         except (TypeError, AttributeError, ValueError) as ex:
-            logging.warning(f'Unable to read Request info: {ex}')
+            self._logger.warning(f'Unable to read Request info: {ex}')
         ### modified Session Object:
         return session
