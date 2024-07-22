@@ -7,7 +7,7 @@ import logging
 from typing import Optional
 from aiohttp import web
 from datamodel.parsers.encoders import DefaultEncoder
-from datamodel.parsers.encoders.json import (  # pylint: disable=C0411
+from datamodel.parsers.json import (  # pylint: disable=C0411
     json_encoder,
     json_decoder
 )
@@ -145,11 +145,11 @@ class AbstractStorage(metaclass=ABCMeta):
         """
         session = await self.get_session(request)
         await self.invalidate(request, session)
-        request["session"] = None
+        request[SESSION_REQUEST_KEY] = None
         try:
             del request[SESSION_KEY]
+            del request[SESSION_ID]
             del request[SESSION_OBJECT]
-            del request[SESSION_REQUEST_KEY]
         except Exception as err:  # pylint: disable=W0703
             self._logger.warning(
                 f'Session: Error on Forgot Method: {err}'

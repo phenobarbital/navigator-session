@@ -12,6 +12,7 @@ from .conf import (
     AUTH_SESSION_OBJECT,
     SESSION_TIMEOUT,
     SESSION_KEY,
+    SESSION_ID,
     SESSION_REQUEST_KEY,
     SESSION_URL,
     SESSION_PREFIX,
@@ -27,6 +28,7 @@ __all__ = (
     'SESSION_URL',
     'SESSION_PREFIX',
     'SESSION_KEY',
+    'SESSION_ID',
     'SESSION_USER_PROPERTY',
 )
 

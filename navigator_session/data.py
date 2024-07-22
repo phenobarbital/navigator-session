@@ -46,13 +46,16 @@ class SessionData(MutableMapping[str, Any]):
         *args,
         data: Optional[Mapping[str, Any]] = None,
         new: bool = False,
+        id: Optional[str] = None,
         identity: Optional[Any] = None,
         max_age: Optional[int] = None
     ) -> None:
         self._changed = False
         self._data = {}
         # Unique ID:
-        self._id_ = data.get(SESSION_ID, None) if data else uuid.uuid4().hex
+        self._id_ = data.get(SESSION_ID, None) if data else id
+        if not self._id_:
+            self._id_ = uuid.uuid4().hex
         # Session Identity
         self._identity = data.get(SESSION_KEY, None) if data else identity
         if not self._identity:
@@ -92,7 +95,7 @@ class SessionData(MutableMapping[str, Any]):
         return self.__created__
 
     @property
-    def id(self) -> str:
+    def session_id(self) -> str:
         return self._id_
 
     @property
