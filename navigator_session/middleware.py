@@ -10,7 +10,9 @@ from .conf import (
 from .storages.abstract import AbstractStorage
 from .data import SessionData
 
+
 Middleware = Callable[[web.Request, Handler], Awaitable[web.StreamResponse]]
+
 
 ### Basic Middleware for Session System
 def session_middleware(

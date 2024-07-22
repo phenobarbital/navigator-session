@@ -8,8 +8,11 @@ import jsonpickle
 from jsonpickle.unpickler import loadclass
 from aiohttp import web
 from datamodel import BaseModel
-from .conf import SESSION_KEY, SESSION_STORAGE
-
+from .conf import (
+    SESSION_KEY,
+    SESSION_ID,
+    SESSION_STORAGE
+)
 
 class ModelHandler(jsonpickle.handlers.BaseHandler):
     """ModelHandler.
@@ -43,14 +46,20 @@ class SessionData(MutableMapping[str, Any]):
         *args,
         data: Optional[Mapping[str, Any]] = None,
         new: bool = False,
+        id: Optional[str] = None,
         identity: Optional[Any] = None,
         max_age: Optional[int] = None
     ) -> None:
         self._changed = False
         self._data = {}
+        # Unique ID:
+        self._id_ = data.get(SESSION_ID, None) if data else id
+        if not self._id_:
+            self._id_ = uuid.uuid4().hex
+        # Session Identity
         self._identity = data.get(SESSION_KEY, None) if data else identity
         if not self._identity:
-            self._identity = uuid.uuid4().hex
+            self._identity = self._id_
         self._new = new if data != {} else True
         self._max_age = max_age if max_age else None
         created = data.get('created', None) if data else None
@@ -75,9 +84,7 @@ class SessionData(MutableMapping[str, Any]):
         self.args = args
 
     def __repr__(self) -> str:
-        return '<{} [new:{}, created:{}] {!r}>'.format(  # pylint: disable=C0209
-            'NAV-Session ', self.new, self.created, self._data
-        )
+        return f'<NAV-Session [new:{self.new}, created:{self.created}] {self._data!r}>'
 
     @property
     def new(self) -> bool:
@@ -86,6 +93,10 @@ class SessionData(MutableMapping[str, Any]):
     @property
     def logon_time(self) -> datetime:
         return self.__created__
+
+    @property
+    def session_id(self) -> str:
+        return self._id_
 
     @property
     def identity(self) -> Optional[Any]:  # type: ignore[misc]

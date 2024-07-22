@@ -10,8 +10,11 @@ class SessionHandler:
 
     def __init__(self, storage: str = 'redis', **kwargs) -> None:
         # TODO: Session Support with parametrization (other storages):
+        self._session_object: str = kwargs.get('session_object', 'nav_session')
+        # Logging Object:
+        self.logger = logging.getLogger(self.__class__.__name__)
         if storage == 'redis':
-            self.storage = RedisStorage(**kwargs)
+            self.storage = RedisStorage(logger=self.logger, **kwargs)
         else:
             raise NotImplementedError(
                 f"Cannot load a Session Storage {storage}"
@@ -34,9 +37,9 @@ class SessionHandler:
         self.app.on_cleanup.append(
             self.session_cleanup
         )
-        logging.debug(':::: Session Handler Loaded ::::')
+        self.logger.debug(':::: Session Handler Loaded ::::')
         # register the Auth extension into the app
-        self.app['nav_session'] = self
+        self.app[self._session_object] = self
 
     async def session_startup(self, app: web.Application):
         """
@@ -45,7 +48,7 @@ class SessionHandler:
         try:
             await self.storage.on_startup(app)
         except Exception as ex:
-            logging.exception(f'{ex}')
+            self.logger.exception(f'{ex}')
             raise RuntimeError(
                 f"Session Storage Error: cannot start Storage Backend {ex}"
             ) from ex
@@ -57,7 +60,7 @@ class SessionHandler:
         try:
             await self.storage.on_cleanup(app)
         except Exception as ex:
-            logging.exception(f'{ex}')
+            self.logger.exception(f'{ex}')
             raise RuntimeError(
                 f"Session Storage Error: cannot start Storage Backend {ex}"
             ) from ex
