@@ -81,18 +81,18 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     license=__license__,
     setup_requires=[
-        "wheel==0.42.0",
-        "Cython==3.0.9",
-        "asyncio==3.4.3"
+        'setuptools==74.0.0',
+        'Cython==3.0.11',
+        'wheel==0.44.0'
     ],
     install_requires=[
         "aiohttp>=3.9.5",
-        "uvloop==0.19.0",
+        "uvloop==0.20.0",
         "asyncio==3.4.3",
         "jsonpickle>=3.0.2",
         "redis>=5.0.4",
-        "python_datamodel>=0.2.1",
-        "navconfig[default]>=1.6.3",
+        "python_datamodel>=0.7.0",
+        "navconfig[default]>=1.7.0",
     ],
     project_urls={  # Optional
         "Source": "https://github.com/phenobarbital/navigator-session",
