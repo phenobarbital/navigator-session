@@ -54,7 +54,7 @@ with open(version, 'r', encoding='utf-8') as meta:
 setup(
     name="navigator-session",
     version=__version__,
-    python_requires=">=3.9.16",
+    python_requires=">=3.9.13",
     url="https://github.com/phenobarbital/navigator-session",
     description=__description__,
     keywords=['asyncio', 'session', 'aioredis', 'aiohttp'],
