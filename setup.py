@@ -87,7 +87,6 @@ setup(
     ],
     install_requires=[
         "aiohttp>=3.9.5",
-        "uvloop==0.20.0",
         "asyncio==3.4.3",
         "jsonpickle>=3.0.2",
         "redis>=5.0.4",
