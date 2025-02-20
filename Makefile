@@ -2,7 +2,7 @@ venv:
 	python3.11 -m venv .venv
 	echo 'run `source .venv/bin/activate` to start develop Navigator-Session'
 
-setup:
+install:
 	pip install -e .
 
 develop:

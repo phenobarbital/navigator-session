@@ -1,9 +1,8 @@
 import uuid
 import time
 from typing import Union, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from collections.abc import Iterator, Mapping, MutableMapping
-import pendulum
 import jsonpickle
 from jsonpickle.unpickler import loadclass
 from aiohttp import web
@@ -25,11 +24,7 @@ class ModelHandler(jsonpickle.handlers.BaseHandler):
     def restore(self, obj):
         module_and_type = obj['py/object']
         mdl = loadclass(module_and_type)
-        if hasattr(mdl, '__new__'):
-            cls = mdl.__new__(mdl)
-        else:
-            cls = object.__new__(mdl)
-
+        cls = mdl.__new__(mdl) if hasattr(mdl, '__new__') else object.__new__(mdl)
         cls.__dict__ = self.context.restore(obj['__dict__'], reset=False)
         return cls
 
@@ -53,33 +48,29 @@ class SessionData(MutableMapping[str, Any]):
         self._changed = False
         self._data = {}
         # Unique ID:
-        self._id_ = data.get(SESSION_ID, None) if data else id
-        if not self._id_:
-            self._id_ = uuid.uuid4().hex
+        self._id_ = (data.get(SESSION_ID, None) if data else id) or uuid.uuid4().hex
         # Session Identity
-        self._identity = data.get(SESSION_KEY, None) if data else identity
-        if not self._identity:
-            self._identity = self._id_
+        self._identity = (
+            data.get(SESSION_KEY, None) if data else identity
+        ) or self._id_
         self._new = new if data != {} else True
-        self._max_age = max_age if max_age else None
+        self._max_age = max_age or None
         created = data.get('created', None) if data else None
-        self._now = pendulum.now('UTC')  # time for this instance creation
+        self._now = datetime.now(timezone.utc)
         self.__created__ = self._now
         now = int(self._now.int_timestamp)
         self._now = now  # time for this instance creation
         age = now - created if created else now
         if max_age is not None and age > max_age:
             data = None
-        if self._new or created is None:
-            self._created = now
-        else:
-            self._created = created
+        self._created = now if self._new or created is None else created
         ## Data updating.
         if data is not None:
             self._data.update(data)
         # Other mark timestamp for this session:
-        dt = pendulum.now('UTC')
-        self._dow = dt.day_of_week
+        dt = datetime.now(timezone.utc)
+        self._dow = dt.weekday()
+        self._doy = dt.timetuple().tm_yday
         self._time = dt.time()
         self.args = args
 
