@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
@@ -56,10 +56,11 @@ jobs:
         id: check_wheels
         run: |
           echo "Checking for wheel types..."
-          if ls dist/*-manylinux*.whl 1> /dev/null 2>&1; then
-            echo "Found manylinux wheels."
-            echo "HAS_MANYLINUX_WHEELS=true" >> $GITHUB_ENV
+          if ls dist/*.whl 1> /dev/null 2>&1; then
+            echo "Found wheel files."
+            echo "HAS_WHEELS=true" >> $GITHUB_ENV
           fi
+
 
       - name: List files in dist
         run: ls -l dist
@@ -73,8 +74,8 @@ jobs:
         run: pip install twine
 
       - name: Publish manylinux wheels to Production PyPI
-        if: env.HAS_MANYLINUX_WHEELS == 'true'
+        if: env.HAS_WHEELS == 'true'
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.NAVIGATOR_SESSION_PYPI_API_TOKEN }}
-        run: twine upload dist/*-manylinux*.whl
+        run: twine upload dist/*.whl
