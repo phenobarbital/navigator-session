@@ -58,7 +58,7 @@ class SessionData(MutableMapping[str, Any]):
         created = data.get('created', None) if data else None
         self._now = datetime.now(timezone.utc)
         self.__created__ = self._now
-        now = int(self._now.int_timestamp)
+        now = int(self._now.timestamp())
         self._now = now  # time for this instance creation
         age = now - created if created else now
         if max_age is not None and age > max_age:
