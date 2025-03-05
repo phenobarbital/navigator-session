@@ -249,7 +249,7 @@ class RedisStorage(AbstractStorage):
     ) -> SessionData:
         """Create a New Session Object for this User."""
         session_identity = request.get(SESSION_KEY, None)
-        session_id = request.get(SESSION_ID, None)
+        session_id = data.get(SESSION_ID, request.get(SESSION_ID, None))
         try:
             conn = aioredis.Redis(connection_pool=self._redis)
         except Exception as err:
