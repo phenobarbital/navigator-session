@@ -1,39 +1,67 @@
 [build-system]
 requires = [
-  'setuptools==74.0.0',
-  'Cython==3.0.11',
-  'wheel==0.44.0'
+  'setuptools>=74.0.0',
+  'Cython>=3.0.11',
+  'wheel>=0.44.0'
 ]
-
 build-backend = "setuptools.build_meta"
 
-[tool.flit.metadata]
-module = "navigator_session"
-author = "Jesus Lara Gimenez"
-author-email = "jesuslarag@gmail.com"
-home-page = "https://github.com/phenobarbital/navigator-session"
-classifiers=[
-  "Development Status :: 4 - Beta",
-  "Intended Audience :: Developers",
-  "Intended Audience :: System Administrators",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python",
-  "Typing :: Typed",
-  "Environment :: Web Environment",
-  "Framework :: AsyncIO",
-  "Topic :: Software Development :: Libraries :: Application Frameworks",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: Software Development :: Build Tools",
-  "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
-  "Topic :: Internet :: WWW/HTTP",
-  "License :: OSI Approved :: BSD License",
-]
-description-file = "README.md"
+[project]
+name = "navigator-session"
+version = "0.7.0"
+description = "Navigator Session allows us to store user-specific data into session object."
+readme = "README.md"
 requires-python = ">=3.9.13"
+license = { text = "Apache 2.0" }
+authors = [
+    { name = "Jesus Lara Gimenez", email = "jesuslarag@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: Web Environment",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Database :: Front-Ends",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: AsyncIO",
+    "Framework :: aiohttp",
+    "License :: OSI Approved :: Apache Software License",
+]
+dependencies = [
+    "aiohttp>=3.9.5",
+    "asyncio==3.4.3",
+    "jsonpickle>=3.0.2",
+    "redis>=5.0.4",
+    "python-datamodel>=0.7.0",
+    "navconfig[default]>=1.7.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "coverage",
+    "mypy",
+    "pylint",
+    "black",
+    "flake8"
+]
+
+[project.urls]
+Homepage = "https://github.com/phenobarbital/navigator-session"
+Source = "https://github.com/phenobarbital/navigator-session"
+Funding = "https://paypal.me/phenobarbital"
+Documentation = "https://github.com/phenobarbital/navigator-session"
+
+[tool.setuptools]
+packages = ["navigator_session"]
 
 [tool.pytest.ini_options]
 addopts = [

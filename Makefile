@@ -1,33 +1,85 @@
+# Navigator-Session Makefile
+
+.PHONY: venv install develop release format lint test clean distclean lock sync
+
+# Python version to use
+PYTHON_VERSION := 3.11
+
+# Auto-detect available tools
+HAS_UV := $(shell command -v uv 2> /dev/null)
+
+# Install uv if missing
+install-uv:
+	curl -LsSf https://astral.sh/uv/install.sh | sh
+	@echo "uv installed! You may need to restart your shell or run 'source ~/.bashrc'"
+
+# Create virtual environment
 venv:
-	python3.11 -m venv .venv
-	echo 'run `source .venv/bin/activate` to start develop Navigator-Session'
+	uv venv --python $(PYTHON_VERSION) .venv
+	@echo 'run `source .venv/bin/activate` to start develop Navigator-Session'
 
+# Install production dependencies using lock file
 install:
-	pip install -e .
+	uv sync --frozen --no-dev
+	@echo "Production dependencies installed."
 
+# Generate lock files
+lock:
+ifdef HAS_UV
+	uv lock
+else
+	@echo "Lock files require uv. Install with: make install-uv"
+endif
+
+# Install all dependencies including dev dependencies
 develop:
-	pip install -e .
-	pip install -Ur docs/requirements-dev.txt
-	flit install --symlink
+	uv sync --frozen --dev
 
-release:
-	lint test clean
-	flit publish
+# Alternative: install without lock file (faster for development)
+develop-fast:
+	uv pip install -e .
+	uv pip install -e .[dev]
 
+# Build and publish release
+release: lint test clean
+	uv build
+	uv publish
+
+# Format code
 format:
-	python -m black navigator_session
+	uv run black navigator_session
 
+# Lint code
 lint:
-	python -m pylint --rcfile .pylintrc navigator_session/*.py
-	python -m black --check navigator_session
+	uv run pylint --rcfile .pylintrc navigator_session/*.py
+	uv run black --check navigator_session
 
+# Run tests
 test:
-	python -m coverage run -m navigator_session.tests
-	python -m coverage report
-	python -m mypy navigator_session/*.py
+	uv run coverage run -m pytest tests
+	uv run coverage report
+	uv run mypy navigator_session/*.py
 
+# Performance tests
 perf:
-	python -m unittest -v navigator_session.tests.perf
+	uv run python -m unittest -v navigator_session.tests.perf
 
+# Clean build artifacts
+clean:
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info/
+	find . -name "*.pyc" -delete
+	find . -name "*.pyo" -delete
+	find . -name "*.so" -delete
+	find . -type d -name __pycache__ -delete
+	@echo "Clean complete."
+
+# Remove virtual environment
 distclean:
 	rm -rf .venv
+	rm -rf uv.lock
+
+# Show project info
+info:
+	uv tree
