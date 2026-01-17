@@ -12,6 +12,11 @@ from .conf import (
     SESSION_ID,
     SESSION_STORAGE
 )
+try:
+    from pydantic import BaseModel as PydanticBaseModel
+except ImportError:
+    PydanticBaseModel = None
+
 
 class ModelHandler(jsonpickle.handlers.BaseHandler):
     """ModelHandler.
@@ -29,6 +34,25 @@ class ModelHandler(jsonpickle.handlers.BaseHandler):
         return cls
 
 jsonpickle.handlers.registry.register(BaseModel, ModelHandler, base=True)
+
+if PydanticBaseModel:
+    class PydanticHandler(jsonpickle.handlers.BaseHandler):
+        """PydanticHandler.
+        This class can handle with serializable Pydantic Models.
+        """
+        def flatten(self, obj, data):
+            data['__dict__'] = self.context.flatten(obj.__dict__, reset=False)
+            return data
+
+        def restore(self, obj):
+            module_and_type = obj['py/object']
+            mdl = loadclass(module_and_type)
+            cls = mdl.__new__(mdl) if hasattr(mdl, '__new__') else object.__new__(mdl)
+            cls.__dict__ = self.context.restore(obj['__dict__'], reset=False)
+            return cls
+
+    jsonpickle.handlers.registry.register(PydanticBaseModel, PydanticHandler, base=True)
+
 
 class SessionData(MutableMapping[str, Any]):
     """Session dict-like object.
