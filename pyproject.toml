@@ -1,4 +1,3 @@
-[build-system]
 requires = [
   'setuptools>=74.0.0',
   'Cython>=3.0.11',
@@ -8,11 +7,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "navigator-session"
-version = "0.7.0"
+dynamic = ["version"]
 description = "Navigator Session allows us to store user-specific data into session object."
 readme = "README.md"
 requires-python = ">=3.9.13"
-license = { text = "Apache 2.0" }
+license = "Apache-2.0"
 authors = [
     { name = "Jesus Lara Gimenez", email = "jesuslarag@gmail.com" }
 ]
@@ -31,7 +30,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Framework :: AsyncIO",
     "Framework :: aiohttp",
-    "License :: OSI Approved :: Apache Software License",
 ]
 dependencies = [
     "aiohttp>=3.9.5",
@@ -60,8 +58,13 @@ Source = "https://github.com/phenobarbital/navigator-session"
 Funding = "https://paypal.me/phenobarbital"
 Documentation = "https://github.com/phenobarbital/navigator-session"
 
-[tool.setuptools]
-packages = ["navigator_session"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["navigator_session*"]
+exclude = ["tests*", "docs*", "examples*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "navigator_session.version.__version__"}
 
 [tool.pytest.ini_options]
 addopts = [
