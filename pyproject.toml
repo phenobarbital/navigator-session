@@ -38,6 +38,9 @@ dependencies = [
     "redis>=5.0.4",
     "python-datamodel>=0.7.0",
     "navconfig[default]>=1.7.0",
+    "cryptography>=41.0",
+    "orjson>=3.9",
+    "pydantic>=2.0",
 ]
 
 [dependency-groups]
