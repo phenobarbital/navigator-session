@@ -240,6 +240,16 @@ class RedisStorage(AbstractStorage):
         except Exception as err:  # pylint: disable=W0703
             self._logger.exception(err, stack_info=True)
             return False
+        if self._use_cookies is True and response is not None:
+            cookie_data = {
+                "session_id": session_id
+            }
+            cookie_data = self._encoder(cookie_data)
+            self.save_cookie(
+                response,
+                cookie_data=cookie_data,
+                max_age=self.max_age
+            )
 
     async def new_session(
         self,
@@ -248,6 +258,8 @@ class RedisStorage(AbstractStorage):
         response: web.StreamResponse = None
     ) -> SessionData:
         """Create a New Session Object for this User."""
+        if not data:
+            data = {}
         session_identity = request.get(SESSION_KEY, None)
         session_id = data.get(SESSION_ID, request.get(SESSION_ID, None))
         try:

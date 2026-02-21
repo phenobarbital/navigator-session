@@ -89,6 +89,8 @@ async def get_session(
                 ignore_cookie=ignore_cookie
             )
         except Exception as err:
+            if new is True:
+                return await storage.new_session(request, userdata)
             raise RuntimeError(
                 f"Error Loading user Session: {err!s}"
             ) from err
