@@ -86,7 +86,8 @@ class SessionData(MutableMapping[str, Any]):
         # Initialize internal storage first (before any attribute access)
         object.__setattr__(self, '_data', {})
         object.__setattr__(self, '_objects', {})
-        object.__setattr__(self, '_changed', False)
+        # If new, mark as changed so it gets saved
+        object.__setattr__(self, '_changed', True if new else False)
         # Unique ID:
         self._id_ = (data.get(SESSION_ID, None) if data else id) or uuid.uuid4().hex
         # Session Identity
