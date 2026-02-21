@@ -186,12 +186,29 @@ class SessionVault:
         await self._redis_set(key, ciphertext_mem)
 
         # Persist to DB + audit
-        async with self._db.acquire() as conn:
-            await conn.execute(
-                _UPSERT_SECRET,
-                self._user_id, key, ciphertext_db, self._active_key_id,
-            )
-            await self._audit(conn, key, "set")
+        ctx = self._db.acquire()
+        if hasattr(ctx, "__aenter__"):
+            async with ctx as conn:
+                await conn.execute(
+                    _UPSERT_SECRET,
+                    self._user_id, key, ciphertext_db, self._active_key_id,
+                )
+                await self._audit(conn, key, "set")
+        else:
+            conn = await ctx
+            try:
+                await conn.execute(
+                    _UPSERT_SECRET,
+                    self._user_id, key, ciphertext_db, self._active_key_id,
+                )
+                await self._audit(conn, key, "set")
+            finally:
+                if hasattr(self._db, 'release'):
+                    await self._db.release(conn)
+                elif hasattr(conn, 'release'):
+                    await conn.release()
+                else:
+                    await conn.close()
 
         logger.debug("Vault set: user=%s key=%s", self._user_id, key)
 
@@ -243,11 +260,27 @@ class SessionVault:
         await self._redis_delete(key)
 
         # Soft-delete in DB + audit
-        async with self._db.acquire() as conn:
-            await conn.execute(
-                _SOFT_DELETE_SECRET, self._user_id, key,
-            )
-            await self._audit(conn, key, "delete")
+        ctx = self._db.acquire()
+        if hasattr(ctx, "__aenter__"):
+            async with ctx as conn:
+                await conn.execute(
+                    _SOFT_DELETE_SECRET, self._user_id, key,
+                )
+                await self._audit(conn, key, "delete")
+        else:
+            conn = await ctx
+            try:
+                await conn.execute(
+                    _SOFT_DELETE_SECRET, self._user_id, key,
+                )
+                await self._audit(conn, key, "delete")
+            finally:
+                if hasattr(self._db, 'release'):
+                    await self._db.release(conn)
+                elif hasattr(conn, 'release'):
+                    await conn.release()
+                else:
+                    await conn.close()
 
         logger.debug("Vault delete: user=%s key=%s", self._user_id, key)
 
@@ -306,8 +339,26 @@ class SessionVault:
         )
 
         # Load all active secrets from DB
-        async with db_pool.acquire() as conn:
-            rows = await conn.fetch(_SELECT_ALL_ACTIVE, user_id)
+        ctx = db_pool.acquire()
+        if hasattr(ctx, "__aenter__"):
+            async with ctx as conn:
+                rows = await conn.fetch(_SELECT_ALL_ACTIVE, user_id)
+        else:
+            conn = await ctx
+            try:
+                if hasattr(conn, 'fetch_all'):
+                    rows = await conn.fetch_all(_SELECT_ALL_ACTIVE, user_id) or []
+                elif hasattr(conn, 'fetch'):
+                    rows = await conn.fetch(_SELECT_ALL_ACTIVE, user_id) or []
+                else:
+                    rows = []
+            finally:
+                if hasattr(db_pool, 'release'):
+                    await db_pool.release(conn)
+                elif hasattr(conn, 'release'):
+                    await conn.release()
+                else:
+                    await conn.close()
 
         for row in rows:
             key = row["key"]
