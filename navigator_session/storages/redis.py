@@ -177,6 +177,28 @@ class RedisStorage(AbstractStorage):
                 return False
         try:
             data = self._decoder(data)
+            # --- START VALIDATION ---
+            # If the session is effectively empty or lacks an identity mapping,
+            # it's an invalid/ghost session. We should delete it and return False.
+            session_content = data.get(SESSION_KEY)
+            if not data or list(data.keys()) == ['session_id'] or session_content is None:
+                self._logger.warning(
+                    f"Redis Storage: Invalid/Empty Session found for {session_id}. Deleting it."
+                )
+                try:
+                    await conn.delete(_id_)
+                except Exception as dex:
+                    self._logger.error(f"Failed to delete ghost session {_id_}: {dex}")
+                
+                if new is True:
+                    return await self.new_session(request, userdata)
+                return False
+            # --- END VALIDATION ---
+            
+            # Use the identity from the DB instead of the cookie identity
+            # because the session could belong to a user, not anonymous.
+            session_identity = data.get(SESSION_KEY, session_identity)
+            
             session = SessionData(
                 id=session_id,
                 identity=session_identity,
