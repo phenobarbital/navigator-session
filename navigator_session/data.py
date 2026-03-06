@@ -101,7 +101,7 @@ class SessionData(MutableMapping[str, Any]):
         self.__created__ = self._now
         now = int(self._now.timestamp())
         self._now = now  # time for this instance creation
-        age = now - created if created else now
+        age = now - created if created else 0
         if max_age is not None and age > max_age:
             data = None
         self._created = now if self._new or created is None else created
