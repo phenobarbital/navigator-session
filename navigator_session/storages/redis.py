@@ -252,7 +252,7 @@ class RedisStorage(AbstractStorage):
             data = {}
         data = self._encoder(session.session_data())
         max_age = session.max_age
-        expire = max_age if max_age is not None else 0
+        expire = max_age if max_age else self.max_age
         try:
             conn = aioredis.Redis(connection_pool=self._redis)
             _id_ = f"session:{session_id}"
