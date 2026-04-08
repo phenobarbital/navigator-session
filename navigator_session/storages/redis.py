@@ -317,9 +317,6 @@ class RedisStorage(AbstractStorage):
             result = await conn.set(
                 _id_, dt, self.max_age
             )
-            self._logger.debug(
-                f'Session Creation: {result}'
-            )
             # Saving the Session ID on redis:
             await conn.set(
                 f"user:{session_identity}",
