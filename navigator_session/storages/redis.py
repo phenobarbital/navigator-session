@@ -152,10 +152,9 @@ class RedisStorage(AbstractStorage):
             SESSION_KEY, None) if userdata else request.get(SESSION_KEY, None)
         if not session_id:
             session_id = await self.get_session_id(conn, session_identity)
-        print('SESSION IDENTITY IS:', session_identity, session_id)
         if session_id is None and new is False:
-            # No Session was found, returning false:
-            return False
+            # No Session was found:
+            return None
         # we need to load session data from redis
         self._logger.debug(
             f':::::: LOAD SESSION FOR {session_id} ::::: '
@@ -174,7 +173,7 @@ class RedisStorage(AbstractStorage):
                 return await self.new_session(request, userdata)
             else:
                 # No Session Was Found
-                return False
+                return None
         try:
             data = self._decoder(data)
             # --- START VALIDATION ---
@@ -192,7 +191,7 @@ class RedisStorage(AbstractStorage):
                 
                 if new is True:
                     return await self.new_session(request, userdata)
-                return False
+                return None
             # --- END VALIDATION ---
             
             # Use the identity from the DB instead of the cookie identity

@@ -1,6 +1,7 @@
 """
 User sessions for Navigator and aiohttp.web server.
 """
+from typing import Optional
 from aiohttp import web
 
 from .version import (
@@ -56,7 +57,7 @@ async def get_session(
         userdata: dict = None,
         new: bool = False,
         ignore_cookie: bool = True
-) -> SessionData:
+) -> Optional[SessionData]:
     """get_session.
 
     Getting User session data from request.
@@ -71,7 +72,8 @@ async def get_session(
         RuntimeError: Session Middleware is not installed.
 
     Returns:
-        SessionData: Dict-like Object with persistent storage of User Data.
+        Optional[SessionData]: Dict-like Object with persistent storage of User Data,
+        or None when no session is found and ``new`` is False.
     """
     session = request.get(SESSION_OBJECT)
     if session is None:
@@ -94,10 +96,13 @@ async def get_session(
             raise RuntimeError(
                 f"Error Loading user Session: {err!s}"
             ) from err
+        if session is None:
+            return None
+        if not isinstance(session, SessionData):
+            raise RuntimeError(
+                f"Installed {storage!r} storage should return a SessionData "
+                f"instance on .load_session() call, got {session!r}."
+            )
         request[SESSION_OBJECT] = session
         request[SESSION_REQUEST_KEY] = session
-        if new is True and not isinstance(session, SessionData):
-            raise RuntimeError(
-                f"Installed {session!r} storage should return session instance "
-                "on .load_session() call, got {session!r}.")
     return session
