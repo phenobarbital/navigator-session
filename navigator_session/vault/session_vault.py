@@ -342,7 +342,10 @@ class SessionVault:
         ctx = db_pool.acquire()
         if hasattr(ctx, "__aenter__"):
             async with ctx as conn:
-                rows = await conn.fetch(_SELECT_ALL_ACTIVE, user_id)
+                if hasattr(conn, "fetch_all"):
+                    rows = await conn.fetch_all(_SELECT_ALL_ACTIVE, user_id) or []
+                else:
+                    rows = await conn.fetch(_SELECT_ALL_ACTIVE, user_id)
         else:
             conn = await ctx
             try:
