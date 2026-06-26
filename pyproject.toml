@@ -10,7 +10,7 @@ name = "navigator-session"
 dynamic = ["version"]
 description = "Navigator Session allows us to store user-specific data into session object."
 readme = "README.md"
-requires-python = ">=3.9.13"
+requires-python = ">=3.10.1"
 license = "Apache-2.0"
 authors = [
     { name = "Jesus Lara Gimenez", email = "jesuslarag@gmail.com" }
@@ -24,7 +24,6 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Database :: Front-Ends",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -37,7 +36,7 @@ dependencies = [
     "jsonpickle>=3.0.2",
     "redis>=5.0.4",
     "python-datamodel>=0.7.0",
-    "navconfig[default]>=1.7.0",
+    "navconfig[default]>=2.2.0",
     "cryptography>=41.0",
     "orjson>=3.9",
     "pydantic>=2.0",
