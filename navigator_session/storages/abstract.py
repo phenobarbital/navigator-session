@@ -124,7 +124,7 @@ class AbstractStorage(metaclass=ABCMeta):
     async def save_session(
         self,
         request: web.Request,
-        response: web.StreamResponse,
+        response: Optional[web.StreamResponse],
         session: SessionData
     ) -> None:
         pass

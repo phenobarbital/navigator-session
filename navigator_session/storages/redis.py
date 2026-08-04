@@ -217,7 +217,7 @@ class RedisStorage(AbstractStorage):
     async def save_session(
         self,
         request: web.Request,
-        response: web.StreamResponse,
+        response: Optional[web.StreamResponse],
         session: SessionData
     ) -> None:
         """Save the whole session in the backend Storage."""
