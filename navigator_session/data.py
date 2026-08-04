@@ -86,7 +86,8 @@ class SessionData(MutableMapping[str, Any]):
         # Initialize internal storage first (before any attribute access)
         object.__setattr__(self, '_data', {})
         object.__setattr__(self, '_objects', {})
-        object.__setattr__(self, '_changed', False)
+        # If new, mark as changed so it gets saved
+        object.__setattr__(self, '_changed', True if new else False)
         # Unique ID:
         self._id_ = (data.get(SESSION_ID, None) if data else id) or uuid.uuid4().hex
         # Session Identity
@@ -100,7 +101,7 @@ class SessionData(MutableMapping[str, Any]):
         self.__created__ = self._now
         now = int(self._now.timestamp())
         self._now = now  # time for this instance creation
-        age = now - created if created else now
+        age = now - created if created else 0
         if max_age is not None and age > max_age:
             data = None
         self._created = now if self._new or created is None else created

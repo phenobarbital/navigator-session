@@ -81,9 +81,14 @@ async def rotate_master_key(
 
     while True:
         async with db_pool.acquire() as conn:
-            rows = await conn.fetch(
-                _SELECT_BATCH, old_key_id, batch_size, offset,
-            )
+            if hasattr(conn, "fetch_all"):
+                rows = await conn.fetch_all(
+                    _SELECT_BATCH, old_key_id, batch_size, offset,
+                ) or []
+            else:
+                rows = await conn.fetch(
+                    _SELECT_BATCH, old_key_id, batch_size, offset,
+                )
 
         if not rows:
             break

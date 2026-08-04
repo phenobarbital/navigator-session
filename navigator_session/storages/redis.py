@@ -152,10 +152,9 @@ class RedisStorage(AbstractStorage):
             SESSION_KEY, None) if userdata else request.get(SESSION_KEY, None)
         if not session_id:
             session_id = await self.get_session_id(conn, session_identity)
-        print('SESSION IDENTITY IS:', session_identity, session_id)
         if session_id is None and new is False:
-            # No Session was found, returning false:
-            return False
+            # No Session was found:
+            return None
         # we need to load session data from redis
         self._logger.debug(
             f':::::: LOAD SESSION FOR {session_id} ::::: '
@@ -174,9 +173,31 @@ class RedisStorage(AbstractStorage):
                 return await self.new_session(request, userdata)
             else:
                 # No Session Was Found
-                return False
+                return None
         try:
             data = self._decoder(data)
+            # --- START VALIDATION ---
+            # If the session is effectively empty or lacks an identity mapping,
+            # it's an invalid/ghost session. We should delete it and return False.
+            session_content = data.get(SESSION_KEY)
+            if not data or list(data.keys()) == ['session_id'] or session_content is None:
+                self._logger.warning(
+                    f"Redis Storage: Invalid/Empty Session found for {session_id}. Deleting it."
+                )
+                try:
+                    await conn.delete(_id_)
+                except Exception as dex:
+                    self._logger.error(f"Failed to delete ghost session {_id_}: {dex}")
+                
+                if new is True:
+                    return await self.new_session(request, userdata)
+                return None
+            # --- END VALIDATION ---
+            
+            # Use the identity from the DB instead of the cookie identity
+            # because the session could belong to a user, not anonymous.
+            session_identity = data.get(SESSION_KEY, session_identity)
+            
             session = SessionData(
                 id=session_id,
                 identity=session_identity,
@@ -230,7 +251,7 @@ class RedisStorage(AbstractStorage):
             data = {}
         data = self._encoder(session.session_data())
         max_age = session.max_age
-        expire = max_age if max_age is not None else 0
+        expire = max_age if max_age else self.max_age
         try:
             conn = aioredis.Redis(connection_pool=self._redis)
             _id_ = f"session:{session_id}"
@@ -240,6 +261,16 @@ class RedisStorage(AbstractStorage):
         except Exception as err:  # pylint: disable=W0703
             self._logger.exception(err, stack_info=True)
             return False
+        if self._use_cookies is True and response is not None:
+            cookie_data = {
+                "session_id": session_id
+            }
+            cookie_data = self._encoder(cookie_data)
+            self.save_cookie(
+                response,
+                cookie_data=cookie_data,
+                max_age=self.max_age
+            )
 
     async def new_session(
         self,
@@ -248,6 +279,8 @@ class RedisStorage(AbstractStorage):
         response: web.StreamResponse = None
     ) -> SessionData:
         """Create a New Session Object for this User."""
+        if not data:
+            data = {}
         session_identity = request.get(SESSION_KEY, None)
         session_id = data.get(SESSION_ID, request.get(SESSION_ID, None))
         try:
@@ -282,9 +315,6 @@ class RedisStorage(AbstractStorage):
             _id_ = f'session:{session_id}'
             result = await conn.set(
                 _id_, dt, self.max_age
-            )
-            self._logger.debug(
-                f'Session Creation: {result}'
             )
             # Saving the Session ID on redis:
             await conn.set(
