@@ -73,6 +73,7 @@ async def rotate_master_key(
     new_master_key = master_keys[new_key_id]
     stats = {"total": 0, "rotated": 0, "errors": 0, "skipped": 0}
     offset = 0
+    batch_num = 0
 
     logger.info(
         "Starting key rotation from v%d to v%d (batch_size=%d)",
@@ -84,16 +85,20 @@ async def rotate_master_key(
             if hasattr(conn, "fetch_all"):
                 rows = await conn.fetch_all(
                     _SELECT_BATCH, old_key_id, batch_size, offset,
-                ) or []
+                )
             else:
                 rows = await conn.fetch(
                     _SELECT_BATCH, old_key_id, batch_size, offset,
                 )
 
+        # Normalise to a real list before testing for exhaustion: a driver -- or
+        # a test double -- may return something truthy that is nonetheless
+        # empty, and `while True` only terminates on a genuinely empty batch.
+        rows = list(rows) if rows else []
         if not rows:
             break
 
-        batch_num = (offset // batch_size) + 1
+        batch_num += 1
         logger.info(
             "Processing batch %d (%d rows)", batch_num, len(rows),
         )
@@ -101,6 +106,7 @@ async def rotate_master_key(
         async with db_pool.acquire() as conn:
             tx = conn.transaction()
             await tx.start()
+            batch_errors = 0
             try:
                 for row in rows:
                     stats["total"] += 1
@@ -129,13 +135,19 @@ async def rotate_master_key(
                             row_id, key_name, err,
                         )
                         stats["errors"] += 1
+                        batch_errors += 1
 
                 await tx.commit()
             except Exception:
                 await tx.rollback()
                 raise
 
-        offset += len(rows)
+        # Rotated rows no longer match `key_version = $1`, so they leave the
+        # result set and the next batch starts from the top again. Only failed
+        # rows remain, so the cursor must step over exactly those: advancing by
+        # len(rows) would skip unprocessed secrets and silently leave them
+        # encrypted under the retired key.
+        offset += batch_errors
 
     logger.info(
         "Key rotation complete: %s", stats,
