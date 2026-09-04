@@ -42,16 +42,20 @@ def session_middleware(
         if not isinstance(response, (web.StreamResponse, web.HTTPException)):
             # likely got websocket or streaming
             return response
-        if response.prepared:
-            # avoid saving info into Prepared responses
-            logging.warning(
-                "We Cannot save session data onto a prepared Response"
-            )
-            return response
         session = request.get(SESSION_OBJECT)
         if isinstance(session, SessionData):
             if session.is_changed:
-                await storage.save_session(request, response, session)
+                if response.prepared:
+                    # Response already prepared (headers sent):
+                    # save session to backend storage but skip
+                    # cookie operations (cannot modify headers).
+                    logging.debug(
+                        "Response already prepared: saving session "
+                        "to backend storage without cookie update."
+                    )
+                    await storage.save_session(request, None, session)
+                else:
+                    await storage.save_session(request, response, session)
                 session.is_changed = False
         if raise_response:
             raise cast(web.HTTPException, raise_response)
