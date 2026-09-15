@@ -24,6 +24,11 @@ INSERT INTO auth.user_vault_audit (user_id, key, operation, key_version, session
 VALUES ($1, $2, 'quarantine', $3, $4)
 """
 
+_INSERT_ROTATION_AUDIT = """
+INSERT INTO auth.user_vault_audit (user_id, key, operation, key_version, session_id)
+VALUES ($1, $2, 'rotate', $3, NULL)
+"""
+
 
 class UserVaultTarget(PostgresTarget):
     """``auth.user_vault_secrets`` rows sealed by ``SessionVault``."""
@@ -73,6 +78,20 @@ class UserVaultTarget(PostgresTarget):
             row.key_version,
             f"run:{run_id}",
         )
+
+    async def record_rotation(self, row: VaultRow, key_version: int) -> None:
+        """Audit a master key rotation of ``row`` (``operation='rotate'``).
+
+        Runs on the current transaction's connection when called inside
+        :meth:`transaction`.
+        """
+        async with self._connection() as conn:
+            await conn.execute(
+                _INSERT_ROTATION_AUDIT,
+                int(row.identity["user_id"]),
+                str(row.identity["key"]),
+                key_version,
+            )
 
 
 def factory(resources: Mapping[str, Any]) -> Optional[UserVaultTarget]:

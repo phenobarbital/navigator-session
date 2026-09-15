@@ -101,7 +101,12 @@ class FakeConnection:
             vals = [v.strip() for v in match["vals"].split(",")]
             row = {}
             for col, val in zip(cols, vals):
-                row[col] = args[int(val[1:]) - 1] if val.startswith("$") else val.strip("'")
+                if val.startswith("$"):
+                    row[col] = args[int(val[1:]) - 1]
+                elif val.upper() == "NULL":
+                    row[col] = None
+                else:
+                    row[col] = val.strip("'")
             self._db.table(match["table"]).append(row)
             return "INSERT 0 1"
         raise AssertionError(f"FakeConnection cannot interpret: {stmt}")

@@ -20,8 +20,8 @@ Security Note (Threat Model):
     - Redis key names and audit rows carry HMACs, never raw session ids or
       secret names.
 
-    Transitional: ``rotate_master_key`` still uses the legacy v1 primitives
-    until it is rebuilt on the v2 envelope.
+    Master key rotation (``rotate_master_key``) re-seals every registered
+    protected target; legacy v1 data is only readable by the offline migrator.
 """
 
 from .session_vault import SessionVault
