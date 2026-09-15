@@ -17,8 +17,11 @@ Security Note (Threat Model):
       the application process can expose plaintext. Mitigation requires
       HSM/secure-enclave integration and is out of scope.
 
-    Transitional: ``SessionVault`` and ``rotate_master_key`` still use the
-    legacy v1 primitives until they are rebuilt on the v2 envelope.
+    - Redis key names and audit rows carry HMACs, never raw session ids or
+      secret names.
+
+    Transitional: ``rotate_master_key`` still uses the legacy v1 primitives
+    until it is rebuilt on the v2 envelope.
 """
 
 from .session_vault import SessionVault
@@ -38,8 +41,10 @@ from .envelope import (
     seal_value,
 )
 from .keyring import KeyRing
+from .models import VaultSecretMetadata
 
 __all__ = [
+    "VaultSecretMetadata",
     "SessionVault",
     "rotate_master_key",
     "VaultConfig",
