@@ -13,7 +13,7 @@ Security Note:
 import logging
 from typing import Any
 
-from .crypto import decrypt_for_db, encrypt_for_db
+from ._legacy_v1_shim import decrypt_for_db, encrypt_for_db  # TODO(TASK-074): v2 rotation
 
 logger = logging.getLogger("navigator.vault")
 

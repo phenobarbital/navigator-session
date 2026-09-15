@@ -16,14 +16,13 @@ Security Note:
 import logging
 from typing import Any
 
-from .crypto import (
+from ._legacy_v1_shim import (  # TODO(TASK-073): rewrite on the v2 envelope
     encrypt_for_session,
     decrypt_for_session,
     encrypt_for_db,
     decrypt_for_db,
-    serialize_value,
-    deserialize_value,
 )
+from .crypto import serialize_value, deserialize_value
 from .config import load_master_keys, get_active_key_id
 
 logger = logging.getLogger("navigator.vault")
