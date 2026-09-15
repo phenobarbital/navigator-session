@@ -60,6 +60,11 @@ Source = "https://github.com/phenobarbital/navigator-session"
 Funding = "https://paypal.me/phenobarbital"
 Documentation = "https://github.com/phenobarbital/navigator-session"
 
+# Vault protected targets (rotation / migration). Other packages register
+# their stores in the same group; see navigator_session/vault/registry.py.
+[project.entry-points."navigator_session.vault_targets"]
+user_vault = "navigator_session.vault.targets.user_vault:factory"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["navigator_session*"]
