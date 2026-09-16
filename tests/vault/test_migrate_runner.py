@@ -42,7 +42,7 @@ class BotConfigTarget(PostgresTarget):
     include_field_in_context = True
     key_version_column = "key_version"
     touch_column = None
-    state_columns = ()
+    state_columns = ("enabled",)
     quarantine_assignments = "enabled = false"
 
     def legacy_unwrap(self, field, plaintext, row):
@@ -98,12 +98,13 @@ def seed_v1_bots(db, master_keys):
     rows = [
         {"id": 1, "user_id": 1, "chatbot_id": "bot-a",
          "mcp_config": env(1, "mcp_config", [{"server": "a"}]), "tools_config": env(1, "tools_config", []),
-         "key_version": 2},
+         "key_version": 2, "enabled": True},
         {"id": 2, "user_id": 2, "chatbot_id": "bot-b",
-         "mcp_config": None, "tools_config": None, "key_version": 1},
+         "mcp_config": None, "tools_config": None, "key_version": 1, "enabled": True},
         # v1 envelope copied from user 1 (context mismatch) → must fail, not be legitimised
         {"id": 3, "user_id": 3, "chatbot_id": "bot-c",
-         "mcp_config": env(1, "mcp_config", [{"server": "stolen"}]), "tools_config": None, "key_version": 2},
+         "mcp_config": env(1, "mcp_config", [{"server": "stolen"}]), "tools_config": None,
+         "key_version": 2, "enabled": True},
     ]
     db.table(MULTI).extend(rows)
     return rows

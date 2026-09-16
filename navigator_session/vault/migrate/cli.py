@@ -110,6 +110,8 @@ def build_parser() -> argparse.ArgumentParser:
     purge = sub.add_parser("purge-redis", help="Delete vault cache keys (and sessions) with SCAN")
     purge.add_argument("--sessions", action="store_true", help="Also delete session:* keys (forces re-login)")
     purge.add_argument("--dry-run", action="store_true", help="Count keys without deleting")
+    purge.add_argument("--report", dest="report_cmd", type=Path, default=None,
+                       help="Write the JSON report to this file")
 
     sub.add_parser("list-targets", help="List configured protected targets")
     return parser
@@ -118,6 +120,9 @@ def build_parser() -> argparse.ArgumentParser:
 def _add_common(parser: argparse.ArgumentParser, *, batch: Optional[int]) -> None:
     parser.add_argument("--target", action="append", dest="targets", metavar="NAME",
                         help="Restrict to a target (repeatable)")
+    # Also accepted after the subcommand, which is how the runbook spells it.
+    parser.add_argument("--report", dest="report_cmd", type=Path, default=None,
+                        help="Write the JSON report to this file")
     if batch is not None:
         parser.add_argument("--batch-size", type=int, default=batch)
 
@@ -395,6 +400,8 @@ def main(
         args = parser.parse_args(argv)
     except SystemExit as exc:  # argparse: --help → 0, usage error → 2
         return EXIT_OK if exc.code in (0, None) else EXIT_CONFIG
+    # `--report` may appear before or after the subcommand; the later one wins.
+    args.report = getattr(args, "report_cmd", None) or args.report
     logging.basicConfig(level=args.log_level.upper(), format="%(levelname)s %(name)s: %(message)s")
     try:
         return asyncio.run(_run(args, resources_factory, discover, confirm, out))
