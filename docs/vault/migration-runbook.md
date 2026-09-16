@@ -155,4 +155,12 @@ finish before the old versions start.
 
 | Date | Environment | Rows (all targets) | migrate --run | verify | Notes |
 |---|---|---|---|---|---|
-| _fill in from the rehearsal_ | | | | | |
+| 2026-09-16 | Development rehearsal (`tests/integration/test_vault_migration_e2e.py`, in-memory stores) | 6 | 0.05 s | 0.01 s | Correctness rehearsal of the whole sequence; no database round-trips |
+| 2026-09-16 | Same host, crypto only (50 000 synthetic rows) | 50 000 | 1.63 s (33 µs/row) | 0.48 s (10 µs/row) | v1 decrypt + v2 seal, single core, AES-GCM |
+| _fill in from your production-sized rehearsal_ | | | | | |
+
+The crypto is not the bottleneck: at ~30 000 rows/s per core, even a million
+secrets convert in under a minute of CPU. Plan the window around the database —
+the export pass, one `UPDATE` per row batched per transaction, and the backup
+directory's write throughput — which is why step 1 of "Before the window" asks
+for a rehearsal on a production-sized copy.
