@@ -4,6 +4,7 @@ Vault Configuration — Master key loading and validated settings.
 Reads master keys from environment variables in the format:
     VAULT_MASTER_KEY_v{N} = <base64-encoded 32-byte key>
     VAULT_ACTIVE_KEY_ID = <integer>
+    VAULT_NAMING_KEY_ID = <integer>  (optional; defaults to the lowest key id)
 
 Security Note:
     Never log key material. Only log key IDs and version numbers.
@@ -72,6 +73,24 @@ def get_active_key_id() -> int:
     return int(raw)
 
 
+def get_naming_key_id() -> int | None:
+    """Read the optional naming key version from VAULT_NAMING_KEY_ID.
+
+    The naming key HMACs session ids and secret names (Redis key names,
+    audit rows). When unset, the lowest key id in the ring is used.
+
+    Returns:
+        Naming key version, or None when the variable is unset or empty.
+
+    Raises:
+        ValueError: If the value is not a valid integer.
+    """
+    raw = os.environ.get("VAULT_NAMING_KEY_ID", "").strip()
+    if not raw:
+        return None
+    return int(raw)
+
+
 def get_active_master_key(master_keys: dict[int, bytes]) -> tuple[int, bytes]:
     """Return the active (key_id, key_bytes) tuple.
 
@@ -109,6 +128,7 @@ class VaultConfig(BaseModel):
     master_keys: dict[int, bytes]
     active_key_id: int
     cipher_backend: str = Field(default="aesgcm")
+    naming_key_id: int | None = Field(default=None)
     max_keys_per_user: int = Field(default=50, ge=1, le=1000)
     session_ttl: int = Field(default=3600, ge=60)
 
@@ -132,6 +152,23 @@ class VaultConfig(BaseModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def validate_naming_key_exists(self) -> "VaultConfig":
+        """Ensure the effective naming key id is present in master_keys."""
+        if self.effective_naming_key_id not in self.master_keys:
+            raise ValueError(
+                f"naming_key_id {self.effective_naming_key_id} not found in "
+                f"master_keys (available: {sorted(self.master_keys.keys())})"
+            )
+        return self
+
+    @property
+    def effective_naming_key_id(self) -> int:
+        """Naming key id in use: the configured one or the lowest key id."""
+        if self.naming_key_id is not None:
+            return self.naming_key_id
+        return min(self.master_keys)
+
     @classmethod
     def from_env(cls) -> "VaultConfig":
         """Create VaultConfig by loading values from environment.
@@ -146,4 +183,5 @@ class VaultConfig(BaseModel):
             master_keys=master_keys,
             active_key_id=active_key_id,
             cipher_backend=cipher_backend,
+            naming_key_id=get_naming_key_id(),
         )
