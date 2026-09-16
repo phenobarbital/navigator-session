@@ -1,155 +1,151 @@
 """
-Vault Key Rotation — Batch re-encryption of secrets when rotating master keys.
+Vault Key Rotation — Re-seal every protected target under a new master key.
 
-Re-encrypts all vault secrets from one key version to another in configurable
-batches. Each batch runs in its own transaction for resumability. The operation
-is idempotent: secrets already at the target key version are skipped by the
-query filter.
+Rotation walks each :class:`~navigator_session.vault.registry.ProtectedTarget`
+(user vault, identity credentials, ai-parrot stores, ...) in keyset-paginated
+batches. For every row that has at least one field sealed with ``old_key_id``,
+all non-NULL fields not already on ``new_key_id`` are opened with the target's
+context and re-sealed under ``new_key_id``; the row is written once. Each batch
+runs in its own transaction.
+
+The operation is idempotent: rows without fields on ``old_key_id`` are counted as
+``skipped``. Rows that cannot be opened (tampered, wrong context, legacy v1,
+missing key version) are left untouched, counted as ``errors`` and reported by
+reference so operators can investigate or quarantine them.
 
 Security Note:
-    Plaintext exists in memory only during re-encryption of each row.
+    Plaintext exists in memory only while a row is re-sealed.
     Never log plaintext or ciphertext values.
 """
 import logging
-from typing import Any
+from typing import Any, Optional
 
-from .crypto import decrypt_for_db, encrypt_for_db
+from .envelope import (
+    UnknownKeyVersionError,
+    VaultCryptoError,
+    open_sealed,
+    read_header,
+    seal,
+)
+from .keyring import KeyRing
+from .registry import ProtectedTarget
 
 logger = logging.getLogger("navigator.vault")
 
-# SQL statements
-_SELECT_BATCH = """
-SELECT id, user_id, key, ciphertext_db, key_version
-FROM auth.user_vault_secrets
-WHERE key_version = $1 AND deleted_at IS NULL
-ORDER BY id
-LIMIT $2
-OFFSET $3
-"""
 
-_UPDATE_SECRET = """
-UPDATE auth.user_vault_secrets
-SET ciphertext_db = $1, key_version = $2, updated_at = NOW()
-WHERE id = $3
-"""
-
-_INSERT_AUDIT = """
-INSERT INTO auth.user_vault_audit (user_id, key, operation, key_version, session_id)
-VALUES ($1, $2, $3, $4, $5)
-"""
+def _new_stats() -> dict[str, Any]:
+    return {"total": 0, "rotated": 0, "skipped": 0, "errors": 0, "failed_refs": []}
 
 
 async def rotate_master_key(
-    db_pool: Any,
+    targets: list[ProtectedTarget],
     old_key_id: int,
     new_key_id: int,
-    master_keys: dict[int, bytes],
+    keyring: KeyRing,
     batch_size: int = 100,
-) -> dict:
-    """Re-encrypt all secrets from old_key_id to new_key_id in batches.
+) -> dict[str, dict[str, Any]]:
+    """Re-seal all target rows from ``old_key_id`` to ``new_key_id``.
 
     Args:
-        db_pool: asyncpg-compatible connection pool.
-        old_key_id: Source key version to rotate from.
-        new_key_id: Target key version to rotate to.
-        master_keys: Mapping of all key versions to raw 32-byte keys.
-        batch_size: Number of rows to process per batch/transaction.
+        targets: Protected targets to rotate (see ``discover_targets``).
+        old_key_id: Master key version being retired.
+        new_key_id: Master key version to re-seal with.
+        keyring: Key ring holding both versions (and any other version still
+            present in rows being rotated).
+        batch_size: Rows per batch/transaction.
 
     Returns:
-        Stats dict with keys: total, rotated, errors, skipped.
+        Mapping of target name to stats: ``total``, ``rotated``, ``skipped``,
+        ``errors`` and ``failed_refs`` (secret-free row references).
 
     Raises:
-        KeyError: If old_key_id or new_key_id is not in master_keys.
+        UnknownKeyVersionError: If either key version is not in the ring
+            (raised before any data is read).
+        ValueError: If both versions are equal or ``batch_size`` < 1.
     """
-    if old_key_id not in master_keys:
-        raise KeyError(
-            f"Old key version {old_key_id} not found in master_keys"
-        )
-    if new_key_id not in master_keys:
-        raise KeyError(
-            f"New key version {new_key_id} not found in master_keys"
-        )
-
-    new_master_key = master_keys[new_key_id]
-    stats = {"total": 0, "rotated": 0, "errors": 0, "skipped": 0}
-    offset = 0
-    batch_num = 0
+    for key_id in (old_key_id, new_key_id):
+        if not keyring.has_key(key_id):
+            raise UnknownKeyVersionError(
+                f"master key version {key_id} not found in key ring"
+            )
+    if old_key_id == new_key_id:
+        raise ValueError("old_key_id and new_key_id must differ")
+    if batch_size < 1:
+        raise ValueError("batch_size must be >= 1")
 
     logger.info(
-        "Starting key rotation from v%d to v%d (batch_size=%d)",
-        old_key_id, new_key_id, batch_size,
+        "Starting key rotation from v%d to v%d over %d target(s) (batch_size=%d)",
+        old_key_id, new_key_id, len(targets), batch_size,
     )
-
-    while True:
-        async with db_pool.acquire() as conn:
-            if hasattr(conn, "fetch_all"):
-                rows = await conn.fetch_all(
-                    _SELECT_BATCH, old_key_id, batch_size, offset,
-                )
-            else:
-                rows = await conn.fetch(
-                    _SELECT_BATCH, old_key_id, batch_size, offset,
-                )
-
-        # Normalise to a real list before testing for exhaustion: a driver -- or
-        # a test double -- may return something truthy that is nonetheless
-        # empty, and `while True` only terminates on a genuinely empty batch.
-        rows = list(rows) if rows else []
-        if not rows:
-            break
-
-        batch_num += 1
-        logger.info(
-            "Processing batch %d (%d rows)", batch_num, len(rows),
-        )
-
-        async with db_pool.acquire() as conn:
-            tx = conn.transaction()
-            await tx.start()
-            batch_errors = 0
-            try:
-                for row in rows:
+    results: dict[str, dict[str, Any]] = {}
+    for target in targets:
+        stats = _new_stats()
+        results[target.name] = stats
+        batch_num = 0
+        async for batch in target.iter_batches(batch_size):
+            batch_num += 1
+            async with target.transaction():
+                for row in batch:
                     stats["total"] += 1
-                    row_id = row["id"]
-                    user_id = row["user_id"]
-                    key_name = row["key"]
-                    ciphertext_db = row["ciphertext_db"]
+                    await _rotate_row(target, row, old_key_id, new_key_id, keyring, stats)
+            logger.debug(
+                "Key rotation %s: batch %d processed (%d rows)",
+                target.name, batch_num, len(batch),
+            )
+        logger.info(
+            "Key rotation %s complete: total=%d rotated=%d skipped=%d errors=%d",
+            target.name, stats["total"], stats["rotated"], stats["skipped"], stats["errors"],
+        )
+    return results
 
-                    try:
-                        plaintext = decrypt_for_db(ciphertext_db, master_keys)
-                        new_ct = encrypt_for_db(
-                            plaintext, new_key_id, new_master_key,
-                        )
 
-                        await conn.execute(
-                            _UPDATE_SECRET, new_ct, new_key_id, row_id,
-                        )
-                        await conn.execute(
-                            _INSERT_AUDIT,
-                            user_id, key_name, "rotate", new_key_id, None,
-                        )
-                        stats["rotated"] += 1
-                    except Exception as err:
-                        logger.error(
-                            "Error rotating secret id=%s key=%s: %s",
-                            row_id, key_name, err,
-                        )
-                        stats["errors"] += 1
-                        batch_errors += 1
+async def _rotate_row(
+    target: ProtectedTarget,
+    row: Any,
+    old_key_id: int,
+    new_key_id: int,
+    keyring: KeyRing,
+    stats: dict[str, Any],
+) -> None:
+    """Rotate one row, updating ``stats`` in place."""
+    present = {f: blob for f, blob in row.values.items() if blob is not None}
+    try:
+        headers = {f: read_header(blob) for f, blob in present.items()}
+    except VaultCryptoError as err:
+        _record_error(target, row, err, stats)
+        return
+    if not any(h.key_id == old_key_id for h in headers.values()):
+        stats["skipped"] += 1
+        return
 
-                await tx.commit()
-            except Exception:
-                await tx.rollback()
-                raise
+    new_blobs: dict[str, Optional[bytes]] = {}
+    try:
+        for field, blob in present.items():
+            if headers[field].key_id == new_key_id:
+                continue
+            context = target.context_for(row, field)
+            plaintext = open_sealed(blob, context, keyring)
+            new_blobs[field] = seal(plaintext, context, keyring, key_id=new_key_id)
+    except VaultCryptoError as err:
+        _record_error(target, row, err, stats)
+        return
 
-        # Rotated rows no longer match `key_version = $1`, so they leave the
-        # result set and the next batch starts from the top again. Only failed
-        # rows remain, so the cursor must step over exactly those: advancing by
-        # len(rows) would skip unprocessed secrets and silently leave them
-        # encrypted under the retired key.
-        offset += batch_errors
+    try:
+        await target.write(row, new_blobs, new_key_id)
+    except LookupError as err:  # row vanished between read and write
+        _record_error(target, row, err, stats)
+        return
+    record_rotation = getattr(target, "record_rotation", None)
+    if record_rotation is not None:
+        await record_rotation(row, new_key_id)
+    stats["rotated"] += 1
 
-    logger.info(
-        "Key rotation complete: %s", stats,
+
+def _record_error(
+    target: ProtectedTarget, row: Any, err: Exception, stats: dict[str, Any]
+) -> None:
+    stats["errors"] += 1
+    stats["failed_refs"].append(row.ref)
+    logger.error(
+        "Key rotation %s: cannot rotate %s: %s", target.name, row.ref, type(err).__name__
     )
-    return stats

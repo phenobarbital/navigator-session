@@ -1,0 +1,90 @@
+{
+  "description": "Frozen v1 Session Vault ciphertexts produced by navigator-session 0.10.2 crypto.py (encrypt_for_db / encrypt_for_session). TEST-ONLY random keys. Used by FEAT-099 rejection tests (TASK-071) and the v1 migrator (TASK-075).",
+  "generated_with": "navigator-session 0.10.2 (origin/main d72f736)",
+  "master_keys_b64": {
+    "1": "Sr9wwcz89HCGJO3JSjLy12ZIJV0z3RSX5/fCQ00wC8Q=",
+    "2": "jHNB3kWa6+i/kCt8uPnprHALHzqm9qTVd+0SKxExlqM="
+  },
+  "session_uuid": "5f0c2d3e-1a2b-4c5d-8e9f-0a1b2c3d4e5f",
+  "records": [
+    {
+      "layer": "db",
+      "purpose": "user-vault",
+      "cipher_backend": "aesgcm",
+      "key_id": 1,
+      "user_id": 42,
+      "key": "openai_api_key",
+      "blob_b64": "AAFeY4LrHP2C0IVNxATpxEHfq6dPWXwlUczcq5OAineVHlb1F/NQTStZZ4L2pXv195V33CoV",
+      "plaintext": "sk-test-not-a-real-key"
+    },
+    {
+      "layer": "db",
+      "purpose": "user-vault",
+      "cipher_backend": "aesgcm",
+      "key_id": 2,
+      "user_id": 42,
+      "key": "jira_config",
+      "blob_b64": "AAK9rEHKSKHG/KyOOzZ6LjQ45qZLUQ1vhl3DtzPrIv4pWxEiRIGKzWsXmRsBh9geiMZxRNMGQ9+2PfXCsDNgV4H2vGOspDJmV4aAEyqltq0lLUc2aEAVDpX7yn50DeCB",
+      "plaintext": {
+        "site": "https://example.atlassian.net",
+        "scopes": [
+          "read",
+          "write"
+        ]
+      }
+    },
+    {
+      "layer": "db",
+      "purpose": "user-vault",
+      "cipher_backend": "chacha20",
+      "key_id": 1,
+      "user_id": 7,
+      "key": "counter",
+      "blob_b64": "AAGZew+r1x0GORwY+1LSCTjMlD7Uh8O6USpdxnzPRt16ul8=",
+      "plaintext": 12345
+    },
+    {
+      "layer": "db",
+      "purpose": "user-vault",
+      "cipher_backend": "aesgcm",
+      "key_id": 1,
+      "user_id": 7,
+      "key": "raw_bytes",
+      "blob_b64": "AAHP9s49fpx6O4wijEUjke7WmbY3HUeu3A9EG6X+TdSCrrShyZaiS9cJc6eTmYVQqcJdwZpcpa1DS18oWr61DQ==",
+      "plaintext_bytes_b64": "AAH+/w=="
+    },
+    {
+      "layer": "db",
+      "purpose": "user-vault",
+      "cipher_backend": "aesgcm",
+      "key_id": 1,
+      "user_id": 7,
+      "key": "nothing",
+      "blob_b64": "AAEUfXBIFlbLqg6C4bNPlVBOh7XEw8i4e/RCW+hf3IBclQ==",
+      "plaintext": null
+    },
+    {
+      "layer": "session",
+      "purpose": "user-vault",
+      "cipher_backend": "aesgcm",
+      "key_id": null,
+      "user_id": 42,
+      "key": "openai_api_key",
+      "blob_b64": "scnm1Ik8M5NPrLCEQjg1/FMO1i5smbZcLTQIcqwmm/hDBAZ23z3R+wVuVcVtpRf+w/4yow==",
+      "plaintext": "sk-test-not-a-real-key"
+    },
+    {
+      "layer": "session",
+      "purpose": "user-vault",
+      "cipher_backend": "chacha20",
+      "key_id": null,
+      "user_id": 7,
+      "key": "flags",
+      "blob_b64": "eOTd3FWrdlUhUKBozKAXT1VN4ZySvV4V37/0pMOEyGZPnXer0l0uJw==",
+      "plaintext": [
+        true,
+        false
+      ]
+    }
+  ]
+}
