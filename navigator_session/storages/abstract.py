@@ -17,6 +17,7 @@ from ..conf import (
     SESSION_ID,
     SESSION_OBJECT,
     SESSION_REQUEST_KEY,
+    SESSION_NAME,
     SESSION_COOKIE_SECURE
 )
 from ..data import SessionData
@@ -43,9 +44,10 @@ class AbstractStorage(metaclass=ABCMeta):
     def __init__(
             self,
             *,
+            name: str = SESSION_NAME,
             logger: Optional[logging.Logger] = None,
             max_age: int = None,
-            secure: bool = True,
+            secure: Optional[bool] = None,
             domain: Optional[str] = None,
             path: str = "/",
             httponly: bool = True,
@@ -62,11 +64,13 @@ class AbstractStorage(metaclass=ABCMeta):
             self.max_age = max_age
         # Using session cookies:
         self._use_cookies = kwargs.get('use_cookies', False)
-        # Storage Name
-        self.__name__: str = SESSION_COOKIE_SECURE
+        # Storage (cookie) Name
+        self.__name__: str = name
         self._domain: Optional[str] = domain
         self._path: str = path
-        self._secure = secure
+        # Default to the SESSION_COOKIE_SECURE setting when the caller
+        # (a subclass or SessionHandler) doesn't explicitly override it.
+        self._secure = SESSION_COOKIE_SECURE if secure is None else secure
         self._kwargs = kwargs
         self._httponly = httponly
         self._samesite = samesite

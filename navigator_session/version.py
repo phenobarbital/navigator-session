@@ -6,7 +6,7 @@ __description__ = (
    'Navigator Session allows us to store user-specific data '
    'into session object.'
 )
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 __copyright__ = 'Copyright (c) 2023 Jesus Lara'
 __author__ = 'Jesus Lara'
 __author_email__ = 'jesuslarag@gmail.com'

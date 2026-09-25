@@ -1,3 +1,18 @@
+1.1.0 (2026-09-25)
+==================
+
+- **Fix: session cookie was named ``csrf_secure`` and never got the
+  ``Secure`` attribute.** ``SESSION_COOKIE_SECURE`` was misused as the
+  cookie *name* (its fallback value, the string ``'csrf_secure'``), while
+  the actual ``secure`` flag defaulted to ``None`` in ``RedisStorage`` —
+  which aiohttp treats as "omit the ``Secure`` attribute entirely",
+  regardless of HTTPS. ``SESSION_COOKIE_SECURE`` is now a proper boolean
+  (default ``True``); the cookie name comes from the existing
+  ``SESSION_NAME`` setting via a new ``name`` constructor parameter on
+  ``AbstractStorage``. Existing deployments relying on the ``csrf_secure``
+  cookie name, or running without HTTPS, must review their
+  ``SESSION_COOKIE_SECURE`` setting.
+
 1.0.0 (2026-09-16)
 ==================
 
