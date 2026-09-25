@@ -42,4 +42,7 @@ SESSION_URL = f"{SESSION_BACKEND}://{REDIS_HOST}:{REDIS_PORT}/{REDIS_SESSION_DB}
 SESSION_USER_PROPERTY = config.get('SESSION_USER_PROPERTY', fallback='user')
 SESSION_KEY = config.get('SESSION_KEY', fallback='id')
 SESSION_ID = config.get('SESSION_ID', fallback='session_id')
-SESSION_COOKIE_SECURE = config.get('SESSION_COOKIE_SECURE', fallback='csrf_secure')
+# Whether session cookies get the `Secure` attribute (HTTPS-only).
+# NOTE: previously this held the *cookie name* ('csrf_secure') by mistake —
+# see SESSION_NAME above for the actual cookie-name setting.
+SESSION_COOKIE_SECURE = config.getboolean('SESSION_COOKIE_SECURE', fallback=True)
