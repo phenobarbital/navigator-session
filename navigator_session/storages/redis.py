@@ -114,7 +114,8 @@ class RedisStorage(AbstractStorage):
         userdata: dict = None,
         response: web.StreamResponse = None,
         new: bool = False,
-        ignore_cookie: bool = True
+        ignore_cookie: bool = True,
+        merge_userdata: bool = False
     ) -> SessionData:
         """
         Load Session.
@@ -124,6 +125,9 @@ class RedisStorage(AbstractStorage):
 
         ---
         new: if False, new session is not created.
+        merge_userdata: opt-in. When True and a stored payload exists, the
+            caller's ``userdata`` is folded over it (caller's values win)
+            instead of being discarded. Default False keeps 1.1.0 behaviour.
         """
         # first: for security, check if cookie csrf_secure exists
         session_id = None
@@ -197,6 +201,11 @@ class RedisStorage(AbstractStorage):
             # Use the identity from the DB instead of the cookie identity
             # because the session could belong to a user, not anonymous.
             session_identity = data.get(SESSION_KEY, session_identity)
+            # Opt-in: fold the caller's fresh userdata over the stored payload.
+            # Default stays False so every existing consumer of this storage
+            # keeps byte-identical behaviour (1.1.0 discarded userdata here).
+            if merge_userdata is True and userdata:
+                data = {**data, **userdata}
             
             session = SessionData(
                 id=session_id,
