@@ -12,6 +12,9 @@ columns, lifecycle columns) and get, for free:
 
 Pools may expose ``acquire()`` either as an async context manager (asyncpg) or
 as an awaitable (asyncdb-style); both are supported, mirroring ``SessionVault``.
+Connections are always used with asyncpg semantics: an asyncdb driver is replaced
+by the native asyncpg connection it wraps (see :func:`native_connection`), because
+its ``transaction()`` starts on await and its ``execute()`` never raises.
 
 Security Note:
     Never log blobs. Row refs contain only the primary key.
@@ -50,24 +53,67 @@ def quote_ident(name: str) -> str:
     return ".".join(f'"{part}"' for part in parts)
 
 
+def native_connection(conn: Any) -> Any:
+    """Return the native asyncpg connection behind ``conn``.
+
+    asyncdb's ``pg`` driver exposes the asyncpg connection it wraps through
+    ``engine()``. Its own API cannot be used for vault writes: ``transaction()`` is
+    an awaitable that has already started the transaction, and ``execute()``
+    swallows every error and returns ``[result, error]``, so a rejected or
+    row-less write would report success.
+
+    Args:
+        conn: Connection acquired from an asyncpg- or asyncdb-style pool.
+
+    Returns:
+        ``conn.engine()`` for an asyncdb driver; any other connection unchanged.
+
+    Raises:
+        TypeError: ``conn`` is asyncdb-style but has no usable native connection.
+            The driver is never used as a fallback.
+    """
+    engine = getattr(conn, "engine", None)
+    if callable(engine):
+        raw = engine()
+        if raw is None or not callable(getattr(raw, "execute", None)):
+            raise TypeError(
+                f"{type(conn).__name__}.engine() returned no asyncpg connection; "
+                "vault storage needs native asyncpg semantics"
+            )
+        return raw
+    if hasattr(conn, "fetch_all"):
+        raise TypeError(
+            f"{type(conn).__name__} is an asyncdb-style connection without engine(); "
+            "vault storage needs native asyncpg semantics"
+        )
+    return conn
+
+
 @asynccontextmanager
 async def acquire_connection(pool: Any) -> AsyncIterator[Any]:
-    """Acquire a connection from asyncpg- or asyncdb-style pools.
+    """Acquire a native asyncpg connection from asyncpg- or asyncdb-style pools.
+
+    The pool's own connection object (an asyncdb driver, for asyncdb pools) is
+    what goes back to the pool on exit.
 
     Args:
         pool: Pool whose ``acquire()`` is an async context manager or awaitable.
 
     Yields:
-        A connection exposing ``fetch``/``fetch_all``, ``execute`` and ``transaction``.
+        The native asyncpg connection (``fetch``, ``execute``, ``transaction``).
+
+    Raises:
+        TypeError: The pool hands out an asyncdb-style connection with no native
+            connection (see :func:`native_connection`).
     """
     ctx = pool.acquire()
     if hasattr(ctx, "__aenter__"):
         async with ctx as conn:
-            yield conn
+            yield native_connection(conn)
         return
     conn = await ctx
     try:
-        yield conn
+        yield native_connection(conn)
     finally:
         if hasattr(pool, "release"):
             await pool.release(conn)
@@ -94,7 +140,8 @@ class PostgresTarget:
     types for contexts and backups.
 
     Args:
-        db_pool: asyncpg-compatible pool.
+        db_pool: asyncpg pool, or asyncdb pool (its connections are unwrapped to
+            native asyncpg connections by :func:`acquire_connection`).
     """
 
     name: ClassVar[str]

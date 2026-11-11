@@ -1,3 +1,19 @@
+1.1.2 (2026-11-11)
+==================
+
+- **Fix: vault writes on asyncdb pools crashed or failed silently.**
+  ``acquire_connection`` handed out the asyncdb ``pg`` driver itself, whose
+  ``transaction()`` starts on await and whose ``execute()`` never raises. As a
+  result ``PostgresTarget.transaction()`` (and so ``rotate_master_key`` /
+  ``migrate_v1_to_v2``) failed with ``'coroutine' object has no attribute
+  'start'``, and a rejected or row-less write, including ``SessionVault.set()``
+  and ``delete()``, reported success. ``acquire_connection`` now yields the
+  native asyncpg connection behind an asyncdb driver (new
+  ``navigator_session.vault.targets.postgres.native_connection``) and refuses an
+  asyncdb-style connection that has none. Callers on asyncdb pools now get
+  exceptions for database errors instead of silent success. asyncpg pools are
+  unaffected.
+
 1.1.0 (2026-09-25)
 ==================
 
