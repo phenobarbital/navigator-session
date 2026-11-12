@@ -377,6 +377,17 @@ class TestSessionState:
         del session['name']
         assert session.is_changed is True
 
+    def test_is_changed_assignment_uses_the_property(self, session):
+        """``session.is_changed = False`` resets the flag; it is not session data."""
+        session['name'] = 'test'
+        assert session.is_changed is True
+
+        session.is_changed = False
+
+        assert session.is_changed is False
+        assert 'is_changed' not in session.session_data()
+        assert 'is_changed' not in session
+
     def test_invalidate_clears_both(self, session):
         """Test invalidate() clears both _data and _objects."""
         session['name'] = 'test'

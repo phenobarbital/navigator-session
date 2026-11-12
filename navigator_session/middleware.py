@@ -33,12 +33,15 @@ def session_middleware(
 
         ## adding storage to every request:
         request[SESSION_STORAGE] = storage
-        raise_response = None
+        raise_response = False
         try:
             response = await handler(request)
         except web.HTTPException as exc:
-            raise_response = exc
-            raise exc
+            # A raised HTTPException (e.g. the redirect that ends a login) is
+            # the response too: save the session onto it below, then re-raise.
+            # Re-raising here instead would drop the session cookie.
+            response = exc
+            raise_response = True
         if not isinstance(response, (web.StreamResponse, web.HTTPException)):
             # likely got websocket or streaming
             return response
@@ -58,7 +61,7 @@ def session_middleware(
                     await storage.save_session(request, response, session)
                 session.is_changed = False
         if raise_response:
-            raise cast(web.HTTPException, raise_response)
+            raise cast(web.HTTPException, response)
         return response
 
     return middleware
