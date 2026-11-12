@@ -1,3 +1,21 @@
+1.1.3 (2026-11-12)
+==================
+
+- **Fix: a session was never saved when the handler raised an
+  ``HTTPException``.** ``session_middleware`` re-raised the exception straight
+  out of its ``except`` block, so neither its ``save_session`` call nor the
+  trailing re-raise meant to follow it ever ran. A handler that created or
+  changed the session and then *raised* its response (typically the redirect
+  ending a login) sent it without the session cookie, and the session changes
+  were not stored. The raised exception is now treated as the response: the
+  changed session is saved onto it (cookie included) and it is re-raised.
+  Returned responses are unchanged. Non-HTTP exceptions still propagate
+  without saving.
+- **Fix: ``session.is_changed = False`` did not reset the flag.**
+  ``SessionData.__setattr__`` stored it as an ``is_changed`` session-data key
+  and left the session marked changed, which is what ``session_middleware``
+  did after every save. ``is_changed`` now goes to its property setter.
+
 1.1.2 (2026-11-11)
 ==================
 

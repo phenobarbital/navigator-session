@@ -67,11 +67,14 @@ class SessionData(MutableMapping[str, Any]):
     _data: Union[str, Any] = {}
     _objects: dict[str, Any] = {}
 
-    # Internal attributes that should not be stored in _data or _objects
+    # Internal attributes that should not be stored in _data or _objects.
+    # ``is_changed`` is a property: listing it routes ``session.is_changed = x``
+    # (as session_middleware does after saving) to its setter instead of
+    # storing an ``is_changed`` key as session data.
     _internal_attrs = frozenset({
         '_data', '_objects', '_changed', '_id_', '_identity', '_new',
         '_max_age', '_now', '__created__', '_created', '_dow', '_doy',
-        '_time', 'args'
+        '_time', 'args', 'is_changed'
     })
 
     def __init__(
